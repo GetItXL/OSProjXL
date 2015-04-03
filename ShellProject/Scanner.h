@@ -1,5 +1,6 @@
 #include <stdio.h>
-//#define BYE 0
+#define ERROR 	0
+#define OK		1
 
 
 
@@ -8,26 +9,22 @@ void shell_init(void);
 
 
 
-// void printPrompt()
+void printPrompt(void);
 // {
 // 	printf("shell < ");
 // }
 
-// int getCommand()
+int getCommand();
 // {
 
-// 	return 1;
-// }
 
 
-// void exit()
-// {
-// 	printf("exit");
-// }
+void recover_from_errors();
 
-// void recover_from_errors(){ printf("recover_from_errors");}
+//{ printf("recover_from_errors");}
 
-// void processCommand(){printf("processCommand");}
+void processCommand();
+//{printf("processCommand");}
 
 
 
