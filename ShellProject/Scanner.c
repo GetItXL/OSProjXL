@@ -22,7 +22,7 @@ void shell_init()
 	// do anything you feel should be done as init
 }
 
-void printPrompt(){	printf("\n >>> ");}
+void printPrompt(){	printf("\n>>> ");}
 // {
 // 	printf("shell < ");
 // }
@@ -32,7 +32,7 @@ int getCommand()
 	//init_scanner_and_parser(); 
 	//The value is 1 if parsing failed because of invalid input, i.e., input that contains a syntax error or that causes YYABORT to be invoked.
 	int temp = yyparse();
-	printf("yyparse is %d \n",temp);
+	//printf("yyparse is %d \n",temp);
 
 	if (temp)								
 		return (ERROR);

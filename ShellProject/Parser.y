@@ -7,39 +7,55 @@
 
 extern int yylex();
 void yyerror (char *s);
+char* combine(char *s, char *b, char *c);
 
-#define YYDEBUG_LEXER_TEXT yytext
+//#define YYDEBUG_LEXER_TEXT yytext
 int yylineno;
+int yydebug;
 
-char sym[10];
+char sym[100];
 
 %}
 
 %union {char *id;}
 
-%token <id> METACHAR WHITESPACE BYE
+%token END
+%token <id> METACHAR WORD WHITESPACE BYE 
 %token <id> CD HOMECD SETENV UNSETENV ALIAS UNALIAS PRINTENV
-%type  <id>  stm expr quit
+%type  <id> line expr buildin quit word combination
 
 	
 %%	
 	
-	stm 	:	expr			{	printf(">> token value : %s\n",$1); YYACCEPT;}
-			|	quit			{	printf("token value : %s\n",$1); exit(1);}
-			;
-			;
-	
-	expr	:	ALIAS 		{ 	$$ = $1; }
-			| 	PRINTENV 	{ 	$$ = $1; }
-			|	SETENV 		{ 	$$ = $1; }
-			|	CD 			{ 	$$ = $1; }
+	line 		
+			:	expr					{	printf("<token value : %s >\n",$1); YYACCEPT;}
+			|	quit					{	 exit(1);	}
+			|	word 					{	printf("<token value : %s >\n",$1); YYACCEPT;}
+			|	combination				{	printf("<token value : %s >\n",$1); YYACCEPT;}
+			|	word 					{	YYABORT;	}
 			;
 
-	quit	: BYE 			{	$$ = $1; }
+	expr		
+			:	ALIAS 		END			{ 	$$ = $1; printf("token end.");}
+			| 	PRINTENV 	END			{ 	$$ = $1; }
+			|	SETENV 		END			{ 	$$ = $1; }
+			|	CD 			END			{ 	$$ = $1; }
 			;
 
+	combination		:	buildin  WHITESPACE word 	{ 	$$ = combine($1, $2, $3);		}	
+					;
 
+	buildin		:	ALIAS 					{ 	$$ = $1; }
+				| 	PRINTENV 				{ 	$$ = $1; }
+				|	SETENV 					{ 	$$ = $1; }
+				|	CD 						{ 	$$ = $1; }
+				;
 
+	word	:	WORD 	END				{	$$ = $1; }
+			;
+
+	quit	: BYE 						{	$$ = $1; }
+			;
 
 %%	
 
@@ -47,17 +63,26 @@ char sym[10];
 void yyerror (char *s) 
 {
 	fprintf(stderr, "line %d: %s\n", yylineno, s);
-	exit(1);
 } 
 
-/*
+char* combine(char *s, char *b, char *c)
+{
+	int length = strlen(s);
+	s[length] = ' '; 			// overwrite null termination
+	s[length+1] = '\0'; 		// add a new null termination
 
+	strcpy(sym,s);
+	strcat(sym, c);
+	return sym;
+}
+
+/*
 int main(void)
 {
 	//yydebug= 1;
 	int temp = yyparse();
-	printf("yyparse is %d", temp);
-	
-}
+	//printf("yyparse is %d \n", temp);
 
+	return temp;
+}
 */

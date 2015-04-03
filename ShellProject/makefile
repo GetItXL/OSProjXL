@@ -5,7 +5,7 @@ lex.yy.c: y.tab.c Scanner.l
 	lex Scanner.l
 
 y.tab.c: Parser.y
-	yacc -d Parser.y
+	yacc -d -t Parser.y
 
 clean:
 	rm Scanner
