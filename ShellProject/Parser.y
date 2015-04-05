@@ -2,60 +2,75 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "main.c"
+#include "Scanner.h"
+
+int yydebug=1; 
 
 
 extern int yylex();
 void yyerror (char *s);
-char* combine(char *s, char *b, char *c);
+
 
 //#define YYDEBUG_LEXER_TEXT yytext
 int yylineno;
 int yydebug;
 
-char sym[100];
+
 
 %}
 
-%union {char *id;}
+%union {
+	int num;
+	char *string;
+}
 
-%token END
-%token <id> METACHAR WORD WHITESPACE BYE 
-%token <id> CD HOMECD SETENV UNSETENV ALIAS UNALIAS PRINTENV
-%type  <id> line expr buildin quit word combination
+/* default yylval type is int (num) */
+%token <num> BYE SETENV PRINTENV CD UNSETENV ALIAS UNALIAS EOL
+%token <string> WORD METACHAR
+
 
 	
 %%	
 	
-	line 		
-			:	expr					{	printf("<token value : %s >\n",$1); YYACCEPT;}
-			|	quit					{	 exit(1);	}
-			|	word 					{	printf("<token value : %s >\n",$1); YYACCEPT;}
-			|	combination				{	printf("<token value : %s >\n",$1); YYACCEPT;}
-			|	word 					{	YYABORT;	}
+	cmd 		
+			:	builtin_cmd				{	;}
 			;
 
-	expr		
-			:	ALIAS 		END			{ 	$$ = $1; printf("token end.");}
-			| 	PRINTENV 	END			{ 	$$ = $1; }
-			|	SETENV 		END			{ 	$$ = $1; }
-			|	CD 			END			{ 	$$ = $1; }
+	builtin_cmd		
+			:	ALIAS EOL				{ 	;}
+			| 	PRINTENV EOL			
+				{ 	bicmd = PRINTENV;
+					builtin = 1;
+					printf("PRINTENV\n");
+					YYACCEPT; 
+					}
+			|	SETENV EOL		
+			|	CD EOL					
+				{ 	bicmd = CDHOME;
+					builtin = 1;
+					printf("CD no para\n");
+					YYACCEPT; 
+					}
+			|	CD WORD EOL
+				{
+					bicmd = CDX;
+					builtin = 1;
+					bistr = $2;
+					printf("CD para\n");
+					YYACCEPT;
+				}
+			|	BYE EOL
+				{
+					bicmd = BYE;
+					builtin = 1;
+					printf("BYE\n");
+					YYACCEPT;
+				}
 			;
 
-	combination		:	buildin  WHITESPACE word 	{ 	$$ = combine($1, $2, $3);		}	
-					;
 
-	buildin		:	ALIAS 					{ 	$$ = $1; }
-				| 	PRINTENV 				{ 	$$ = $1; }
-				|	SETENV 					{ 	$$ = $1; }
-				|	CD 						{ 	$$ = $1; }
-				;
 
-	word	:	WORD 	END				{	$$ = $1; }
-			;
 
-	quit	: BYE 						{	$$ = $1; }
-			;
 
 %%	
 
@@ -65,17 +80,6 @@ void yyerror (char *s)
 	fprintf(stderr, "line %d: %s\n", yylineno, s);
 } 
 
-char* combine(char *s, char *b, char *c)
-{
-	int length = strlen(s);
-	s[length] = ' '; 			// overwrite null termination
-	s[length+1] = '\0'; 		// add a new null termination
-
-	strcpy(sym,s);
-	strcat(sym, c);
-	return sym;
-}
-
 /*
 int main(void)
 {
@@ -84,5 +88,10 @@ int main(void)
 	//printf("yyparse is %d \n", temp);
 
 	return temp;
-}
-*/
+}*/
+
+/*
+	words : WORD
+			| words WORD
+				;*/
+

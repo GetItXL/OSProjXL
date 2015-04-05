@@ -1,6 +1,12 @@
 #include <stdio.h>
-#define ERROR 	0
-#define OK		1
+#include "y.tab.h"
+#define ERROR 	1
+#define OK		0
+
+#define CDHOME 350
+#define CDX 351
+//#define LOGOUT 352
+//You can either define it here or include "y.tab.h" which has the BYE definition already
 
 
 
@@ -25,6 +31,14 @@ void recover_from_errors();
 
 void processCommand();
 //{printf("processCommand");}
+
+
+extern int builtin;
+extern int bicmd;
+extern char *bistr;
+
+
+
 
 
 
