@@ -53,6 +53,14 @@ int yydebug;
 					printf("SETENV\n");
 					YYACCEPT;
 				}	
+			|	UNSETENV WORD EOL
+				{
+					bicmd = UNSETENV;
+					builtin = 1;
+					bistr = $2;
+					printf("UNSETENV\n");
+					YYACCEPT;
+				}
 			|	CD EOL					
 				{ 	bicmd = CDHOME;
 					builtin = 1;
