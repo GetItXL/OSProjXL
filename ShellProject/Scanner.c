@@ -161,6 +161,7 @@ void gohome(){
 }
 
 void printEnv(){
-	for (char **env = environ; *env; ++env)
+	char **env;
+	for (env = environ; *env != 0; env++)
         printf("%s\n", *env);
 }
