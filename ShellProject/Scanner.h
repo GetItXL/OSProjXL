@@ -6,10 +6,12 @@
 
 #define ERROR 	1
 #define OK		0
-//#define MAX 	100
+#define MAX 	100
 
 #define CDHOME 350
 #define CDX 351
+
+#define ALIASADD 352
 //#define LOGOUT 352
 //You can either define it here or include "y.tab.h" which has the BYE definition already
 
@@ -20,28 +22,6 @@ struct alias {
 	char *alname;
 	char *alstr;
 };
-
-
-
-
-void shell_init(void);
-
-
-
-void printPrompt(void);
-// {
-// 	printf("shell < ");
-// }
-
-int getCommand();
-
-
-void recover_from_errors();
-
-//{ printf("recover_from_errors");}
-
-void processCommand();
-//{printf("processCommand");}
 
 
 void changedir(char*);
@@ -56,19 +36,32 @@ void do_it();
 void gohome();
 void printEnv();
 
+//------- function for alias -----------
+
+int checkExistAlias(char*);		// -1 does not exist, else return index position;
+int checkAliasLoop();				//0 is loop, 1 is not loop;
+void addAlias(char*, char*);	
+void deleteAlias(char*);
+void showAlias();					//display all alias in tab
+//char* noquoto(char*);
+// -------------------------------------
+
 extern int yylex();
 extern int yylineno;
 extern char* yytext;
 extern int yyparse();
-
 extern char **environ;
-
 extern int builtin;
 extern int bicmd;
 extern char *bistr;
 extern char *bistr2;
-extern struct alias aliastab[];	// table to store alias 
 
+// --------- global variables for alias ------------
+extern struct alias aliastab[MAX];	// table to store alias 
+extern int aliasLoop;				//return 1 is loop, 0 is not loop
+extern int aliasNumb;				// count number of alias in tab
+extern char *aliasname;
+extern char *aliastr;
 
 #endif
 

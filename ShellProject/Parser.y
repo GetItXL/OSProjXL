@@ -9,6 +9,7 @@ int yydebug=1;
 extern int yylex();
 void yyerror (char *s);
 
+char* noquote(char *s);
 
 //#define YYDEBUG_LEXER_TEXT yytext
 int yylineno;
@@ -27,7 +28,8 @@ int yydebug;
 %token <num> BYE SETENV PRINTENV CD UNSETENV ALIAS UNALIAS EOL
 %token <string> WORD METACHAR
 
-	
+
+
 %%	
 	
 	cmd 		
@@ -35,13 +37,43 @@ int yydebug;
 			;
 
 	builtin_cmd		
-			:	ALIAS EOL				{ 	;}
+			:	EOL
+				{
+					builtin = 1;
+					bicmd = EOL;
+					YYACCEPT;
+				}
+			|	ALIAS EOL				
+				{ 	
+					bicmd = ALIAS;
+					builtin = 1;
+					printf("ALIAS no para\n");
+					YYACCEPT;
+				}
+			|	ALIAS WORD WORD EOL
+				{
+					bicmd = ALIASADD;
+					builtin = 1;
+					aliasname = $2;
+					aliastr = $3;
+					printf("ALIASADD\n %s",$3);
+					YYACCEPT;
+				}
+			|	UNALIAS WORD EOL
+				{
+					bicmd = UNALIAS;
+					builtin = 1;
+					aliasname = $2;
+					printf("UNALIAS no para\n");
+					YYACCEPT;
+				}
+
 			| 	PRINTENV EOL			
 				{ 	bicmd = PRINTENV;
 					builtin = 1;
 					printf("PRINTENV\n");
 					YYACCEPT; 
-					}
+				}
 			|	SETENV WORD WORD EOL	
 				{
 					bicmd = SETENV;
@@ -60,11 +92,12 @@ int yydebug;
 					YYACCEPT;
 				}
 			|	CD EOL					
-				{ 	bicmd = CDHOME;
+				{ 	
+					bicmd = CDHOME;
 					builtin = 1;
 					printf("CD no para\n");
 					YYACCEPT; 
-					}
+				}
 			|	CD WORD EOL
 				{
 					bicmd = CDX;
@@ -89,6 +122,23 @@ int yydebug;
 
 
 %%	
+
+char* noquoto(char* s)
+{
+	char temp[100];
+	int length = strlen(s);
+	printf("length is %d\n", length);
+
+	for(int i = 0; i < length-2; i++)
+	{
+		temp[i] = s[i+1];
+		//printf("char %c\n", temp[i-1]);
+	}
+	printf("new string %s\n", temp);
+
+
+	return temp;
+}
 
 
 void yyerror (char *s) 
