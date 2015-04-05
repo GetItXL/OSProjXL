@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "Scanner.h"
-#include "Scanner.c"
 
 int yydebug=1; 
 
@@ -29,7 +28,6 @@ int yydebug;
 %token <num> BYE SETENV PRINTENV CD UNSETENV ALIAS UNALIAS EOL
 %token <string> WORD METACHAR
 
-
 	
 %%	
 	
@@ -45,7 +43,15 @@ int yydebug;
 					printf("PRINTENV\n");
 					YYACCEPT; 
 					}
-			|	SETENV EOL		
+			|	SETENV WORD WORD EOL	
+				{
+					bicmd = SETENV;
+					builtin = 1;
+					bistr = $2;
+					bistr2 = $3;
+					printf("SETENV\n");
+					YYACCEPT;
+				}	
 			|	CD EOL					
 				{ 	bicmd = CDHOME;
 					builtin = 1;
@@ -73,6 +79,8 @@ int yydebug;
 
 
 
+
+
 %%	
 
 
@@ -91,8 +99,13 @@ int main(void)
 	return temp;
 }*/
 
+
 /*
 	words : WORD
+				{
+					$$ = $1;
+				}
 			| words WORD
 				;*/
+
 

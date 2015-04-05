@@ -36,6 +36,7 @@ void processCommand();
 extern int builtin;
 extern int bicmd;
 extern char *bistr;
+extern char *bistr2;
 
 
 

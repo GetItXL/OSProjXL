@@ -32,6 +32,9 @@ void printEnv();
 int builtin;
 int bicmd;
 char *bistr;
+char *bistr2;
+
+
 
 int CMD = 0;
 
@@ -95,6 +98,7 @@ void init_scanner_and_parser(){
 	builtin = 0;
 	//set to null
 	bistr = '\0';
+	bistr2 = '\0';
 }
 
 
@@ -142,6 +146,9 @@ void do_it(){
 		case BYE :
 			exit(1);
 			break;
+		case SETENV :
+			setenv(bistr, bistr2, 1);
+			break;
 	}
 }
 
@@ -165,3 +172,4 @@ void printEnv(){
 	for (env = environ; *env != 0; env++)
         printf("%s\n", *env);
 }
+
