@@ -5,26 +5,7 @@
 #include <stdlib.h>
 #include "y.tab.h"
 
-extern int yylex();
-extern int yylineno;
-extern char* yytext;
-extern int yyparse();
 
-
-extern char **environ;
-
-
-void changedir(char*);
-void print(void);
-void shell_init();
-void printPrompt();
-int getCommand();
-void init_scanner_and_parser();
-void recover_from_errors();
-void processCommand();
-void do_it();
-void gohome();
-void printEnv();
 
 
 
