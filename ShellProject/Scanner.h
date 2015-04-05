@@ -1,7 +1,12 @@
+#ifndef SCANNER_H_
+#define SCANNER_H_
+
 #include <stdio.h>
 #include "y.tab.h"
+
 #define ERROR 	1
 #define OK		0
+//#define MAX 	100
 
 #define CDHOME 350
 #define CDX 351
@@ -10,11 +15,11 @@
 
 
 /* alias structure */
-// struct alias {
-// 	int used;			//used = 1; new = 0
-// 	char *alname;
-// 	char *alstr;
-// };
+struct alias {
+	int used;			//used = 1; new = 0
+	char *alname;
+	char *alstr;
+};
 
 
 
@@ -29,7 +34,6 @@ void printPrompt(void);
 // }
 
 int getCommand();
-// {
 
 
 void recover_from_errors();
@@ -63,10 +67,10 @@ extern int builtin;
 extern int bicmd;
 extern char *bistr;
 extern char *bistr2;
-//extern struct alias aliastab[];	// table to store alias 
+extern struct alias aliastab[];	// table to store alias 
 
 
-
+#endif
 
 
 

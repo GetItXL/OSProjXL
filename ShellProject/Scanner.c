@@ -2,8 +2,8 @@
 #include <string.h>
 #include "Scanner.h"
 #include <unistd.h>
-#include <stdlib.h>
-#include "y.tab.h"
+//#include <stdlib.h>
+//#include "y.tab.h"
 
 
 

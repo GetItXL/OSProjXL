@@ -2,9 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "Scanner.h"
 #include "Scanner.c"
-
 int yydebug=1; 
 
 
