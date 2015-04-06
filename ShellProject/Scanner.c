@@ -5,8 +5,17 @@
 #include "alias.c"
 //#include <stdlib.h>
 //#include "y.tab.h"
+#include <signal.h>
 
+//---------------- This is for handling Ctrl+C -------
+typedef void (*sighandler_t)(int);
+void signalHandling(int signo)
+{
 
+	printf("\n");
+	printPrompt();
+	fflush(stdout);
+}
 
 //declare the global variables 
 int builtin;
@@ -19,6 +28,7 @@ YY_BUFFER_STATE buffer;
 
 int main(void) 
 {
+
 	/*
 		char string[] = "\"sdfa\"\n String";
 	    YY_BUFFER_STATE buffer = yy_scan_string(string);
@@ -28,7 +38,12 @@ int main(void)
     */
 
 
-	
+
+	//For handling Ctrl + C
+	signal(SIGINT, SIG_IGN);
+	signal(SIGINT, signalHandling);
+	//May need to use sigaction instead later.
+
 	shell_init();
 	while(1){
 		printPrompt();
