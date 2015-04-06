@@ -2,6 +2,7 @@
 #include <string.h>
 #include "Scanner.h"
 #include <unistd.h>
+#include "alias.c"
 //#include <stdlib.h>
 //#include "y.tab.h"
 
@@ -12,17 +13,6 @@ int builtin;
 int bicmd;
 char *bistr;
 char *bistr2;
-
-
-// ---- alias globle variables ----
-
-struct alias aliastab[MAX];
-char *aliasname;
-char *aliastr;
-int aliasLoop;				//return 1 is loop, 0 is not loop
-int aliasNumb;
-
-
 
 int CMD;
 
@@ -38,7 +28,9 @@ int main(void)
 		{
 			//case BYE:		exit(1);
 			case ERROR: 	recover_from_errors();
+							break;
 			case OK:		processCommand();
+							break;
 		}
 		
 	}
@@ -76,8 +68,9 @@ int getCommand()
 	init_scanner_and_parser(); 
 
 	//The value is 1 if parsing failed because of invalid input, i.e., input that contains a syntax error or that causes YYABORT to be invoked.
-
-	if (yyparse())								
+	
+	// maybe need one variable to check alias here?
+	if (yyparse())							
 		return (ERROR);
 	else
 		return (OK);		//The value returned by yyparse is 0 if parsing was successfu					
@@ -113,9 +106,9 @@ void processCommand()
 	// else
 	// 	execute_it();	
 	
-	printf("processCommand\n");
-	printf("bicmd: %d", bicmd);
-	printf("builtin: %d", builtin);
+	//printf("processCommand\n");
+	printf("bicmd: %d\n", bicmd);
+	//printf("builtin: %d\n", builtin);
 
 	if(builtin)
 		do_it();	
@@ -143,8 +136,15 @@ void do_it(){
 		case ALIAS :
 			showAlias();
 			break;
+		case WORD :
+			printf("word in scanner.c\n");
+			processAlias(strAlias);
+			break;
 		case UNALIAS :
 			deleteAlias(aliasname);
+			break;
+		case ALIASADDSTR :
+			addAlias(aliasname, aliastr);
 			break;
 		case ALIASADD :
 			addAlias(aliasname, aliastr);
@@ -153,7 +153,7 @@ void do_it(){
 			break;
 		default:	
 				printf("unexpected error!");
-				exit(1);
+				//exit(1);
 
 	}
 }
@@ -164,7 +164,7 @@ void do_it(){
 void changedir(char *s){
 	if(chdir(s) == -1){
 		printf("%s: ", s);
-		printf("not a directory");
+		printf("not a directory\n");
 		return;
 	}
 }
@@ -179,108 +179,4 @@ void printEnv(){
 	for (env = environ; *env != 0; env++)
         printf("%s\n", *env);
 }
-
-
-// ------------------ functions for alias -----------------------
-
-
-int checkExistAlias(char* name)
-{
-	for(int i = 0; i < aliasNumb; i++)
-	{
-		if(strcmp(aliastab[i].alname,name) == 0)
-			return i;
-	}
-	return -1;
-}
-
-
-int checkAliasLoop()
-{
-	return 0;
-}		//1 is loop, 0 is not loop;
-
-
-//need to update table in case there is a nested alias
-void addAlias(char* name, char* str)
-{
-
-	// testing code
-	char* temp;
-	printf("name is %s, string is %s.\n", name, str);
-
-	int aliasIndex = checkExistAlias(name);
-	printf("aliasIndex is %d\n", aliasIndex);
-	
-	if(checkAliasLoop() == 0)
-	{
-		//printf("checkAliasLoop");
-		//temp = noquoto(str);
-		if(aliasIndex == (-1))			//if does not exist alias has same name
-		{
-			printf("aliasNumber is %d\n", aliasNumb);
-			aliastab[aliasNumb].alname = name;
-			aliastab[aliasNumb].alstr = str;
-
-			aliasNumb++;
-		}
-		else
-		{
-			aliastab[aliasIndex].alname = name;
-			aliastab[aliasIndex].alstr = str;
-		}
-	}
-	printf("checkAliasLoop is end");
-}
-
-void deleteAlias(char* name)
-{
-	int aliasIndex = checkExistAlias(name);
-	if(aliasIndex != -1)					// alias exist
-	{
-		//aliastab[aliasIndex].alname = '0';
-		//aliastab[aliasIndex].alstr = '0';
-		for(int i = aliasIndex; i < aliasNumb-1; i++ )
-     	{	aliastab[i] = aliastab[i+1];	}
-     	aliasNumb--;
-	}
-}
-
-void showAlias()
-{
-	if(aliasNumb == 0)
-		printf("alias table is empty!\n");
-	else
-	{
-		for(int i = 0; i < aliasNumb; i++)
-		{
-			printf("alias %s=\"%s\"\n", aliastab[i].alname,aliastab[i].alstr);
-		}
-	}
-}
-/*
-char* noquoto(char* s)
-{
-	char temp[100];
-	int length = strlen(s);
-	printf("length is %d\n", length);
-
-	for(int i = 0; i < length-2; i++)
-	{
-		temp[i] = s[i+1];
-		//printf("char %c\n", temp[i-1]);
-	}
-	printf("new string %s\n", temp);
-
-
-	return temp;
-}
-
-*/
-
-
-
-
-
-
 

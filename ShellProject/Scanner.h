@@ -4,14 +4,17 @@
 #include <stdio.h>
 #include "y.tab.h"
 
-#define ERROR 	1
-#define OK		0
-#define MAX 	100
+#define ERROR 			1
+#define OK				0
+#define ALIASCMD		2
 
-#define CDHOME 350
-#define CDX 351
+#define MAX 			100
 
-#define ALIASADD 352
+#define CDHOME 			350
+#define CDX 			351
+
+#define ALIASADD 		352
+#define ALIASADDSTR 	353	
 //#define LOGOUT 352
 //You can either define it here or include "y.tab.h" which has the BYE definition already
 
@@ -44,6 +47,8 @@ void addAlias(char*, char*);
 void deleteAlias(char*);
 void showAlias();					//display all alias in tab
 //char* noquoto(char*);
+void processAlias(char*);			//check if there is a alias
+int alias_input(int cmd);
 // -------------------------------------
 
 extern int yylex();
@@ -62,6 +67,7 @@ extern int aliasLoop;				//return 1 is loop, 0 is not loop
 extern int aliasNumb;				// count number of alias in tab
 extern char *aliasname;
 extern char *aliastr;
+extern char *strAlias;
 
 #endif
 

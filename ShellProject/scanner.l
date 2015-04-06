@@ -4,7 +4,6 @@
 	#include <string.h>
 	#include "y.tab.h"
 
-
 // for debug 
 #undef ECHO		// this will return the token value once pass to yacc file
 //#define ECHO printf ("[%s]\n", yytext)
@@ -28,7 +27,7 @@
 
 
 [a-zA-Z0-9./:~]+				{	yylval.string = strdup(yytext);		return WORD;	}
-["][a-zA-Z0-9<>|\\& ./~:]+["]  	{ 	yylval.string = strdup(yytext);	 	return WORD;	}
+["][a-zA-Z0-9<>|\\& ./~:]+["]  	{ 	yylval.string = strdup(yytext);	 	return STRING;	}
 [<>|"\\&]						{	yylval.string = strdup(yytext);	 	return METACHAR;	}
 [ \t]+							;	//Ignore whitespaces
 \n								{	return EOL;}
