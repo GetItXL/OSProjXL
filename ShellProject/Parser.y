@@ -25,7 +25,7 @@ int yydebug;
 }
 
 /* default yylval type is int (num) */
-%token <num> BYE SETENV PRINTENV CD UNSETENV ALIAS UNALIAS EOL
+%token <num> BYE SETENV PRINTENV CD UNSETENV ALIAS UNALIAS EOL READFILE OUTFILE PIPE
 %token <string> WORD METACHAR STRING
 
 
@@ -35,6 +35,7 @@ int yydebug;
 	cmd 		
 			:	builtin_cmd				{	;}
 			|	alias_cmd				{	;}
+			|	other_cmd				{	;}
 			;
 
 	builtin_cmd		
@@ -74,6 +75,21 @@ int yydebug;
 					printf("CD no para\n");
 					YYACCEPT; 
 				}
+			|	CD 					
+				{ 	
+					bicmd = CDHOME;
+					builtin = 1;
+					printf("CD no para\n");
+					YYACCEPT; 
+				}
+			|	CD WORD 
+				{
+					bicmd = CDX;
+					builtin = 1;
+					bistr = $2;
+					printf("CD para\n");
+					YYACCEPT;
+				}
 			|	CD WORD EOL
 				{
 					bicmd = CDX;
@@ -82,12 +98,11 @@ int yydebug;
 					printf("CD para\n");
 					YYACCEPT;
 				}
-			|	WORD EOL			//the word here may be alias so we need to call something
+			|	BYE 
 				{
-					bicmd = WORD;
+					bicmd = BYE;
 					builtin = 1;
-					strAlias = $1;
-					printf("WORD para\n");
+					printf("BYE\n");
 					YYACCEPT;
 				}
 			|	BYE EOL
@@ -117,7 +132,7 @@ int yydebug;
 					printf("ALIASADDSTR %s\n",$3);
 					YYACCEPT;
 				}
-			|	ALIAS WORD WORD EOL				// alias to another alias
+			|	ALIAS WORD WORD EOL			// alias to another alias
 				{
 					bicmd = ALIASADD;
 					builtin = 1;
@@ -126,28 +141,39 @@ int yydebug;
 					printf("ALIASADDWORD %s\n",$3);
 					YYACCEPT;
 				}
-			|	ALIAS WORD BYE EOL				// alias to another builin command (bye/cd/whatever)
+	
+
+	other_cmd:
+				WORD EOL			//the word here may be alias or system call command so we need to call something
 				{
-					bicmd = ALIASADD;
-					builtin = 1;
-					aliasname = $2;
-					aliastr = "bye";
+					bicmd = WORD;
+					builtin = 0;
+					unknowStr = $1;
+					printf("WORD para\n");
 					YYACCEPT;
 				}
-			|	ALIAS WORD CD EOL				// alias to another builin command (bye/cd/whatever)
+			|	WORD 				//testing code
 				{
-					bicmd = ALIASADD;
-					builtin = 1;
-					aliasname = $2;
-					aliastr = "cd";
+					bicmd = WORD;
+					builtin = 0;
+					unknowStr = $1;
+					printf("WORD without endline\n");
 					YYACCEPT;
 				}
-			|	UNALIAS WORD EOL
+			|	STRING 				//testing code
 				{
-					bicmd = UNALIAS;
-					builtin = 1;
-					aliasname = $2;
-					printf("UNALIAS no para\n");
+					bicmd = STRING;
+					builtin = 0;
+					unknowStr = $1;
+					printf("STRING without endline\n");
+					YYACCEPT;
+				}
+			|	STRING 	EOL			//testing code
+				{
+					bicmd = STRING;
+					builtin = 0;
+					unknowStr = $1;
+					printf("STRING  endline\n");
 					YYACCEPT;
 				}
 			;

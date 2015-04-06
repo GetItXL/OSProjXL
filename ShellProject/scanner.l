@@ -11,7 +11,6 @@
 %}
 
 
-
 %%
 					// create an union in yacc file, and char *id/
 					// I need to pass the string value from lex token to yacc, so I use yylval.id = strdup(yytext);
@@ -23,8 +22,9 @@
 "unsetenv"						{ 	return UNSETENV;}
 "alias"							{ 	return ALIAS;}
 "unalias"						{	return UNALIAS;}
-
-
+"<"								{	return READFILE;}
+">"								{	return OUTFILE;}
+"|"								{	return PIPE;}
 
 [a-zA-Z0-9./:~]+				{	yylval.string = strdup(yytext);		return WORD;	}
 ["][a-zA-Z0-9<>|\\& ./~:]+["]  	{ 	yylval.string = strdup(yytext);	 	return STRING;	}

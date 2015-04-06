@@ -9,6 +9,7 @@
 #define ALIASCMD		2
 
 #define MAX 			100
+#define MAXARGS			300
 
 #define CDHOME 			350
 #define CDX 			351
@@ -18,13 +19,30 @@
 //#define LOGOUT 352
 //You can either define it here or include "y.tab.h" which has the BYE definition already
 
+typedef struct comargs {
+	char* args[MAXARGS];
+} ARGTAB;
+
+
+// command line structure
+typedef struct com {
+	char* comName;				//name of the command
+	int countArgs;				//count of its arguments
+	ARGTAB *atptr;				//pointer to a list of null terminated arguments
+	int infd;					//intput file name
+	int outfd;					//output file name
+} COMMAND;
+
 
 /* alias structure */
 struct alias {
 	int used;			//used = 1; new = 0
+	int refalias;		// 0 refer to a string, 1 refer to an alias
 	char *alname;
 	char *alstr;
 };
+
+
 
 
 void changedir(char*);
@@ -39,18 +57,26 @@ void do_it();
 void gohome();
 void printEnv();
 
+// ------------ other command function ------------
+void execute_it();
+int check_in_file();
+int check_out_file();
+int Executable();
+
 //------- function for alias -----------
 
-int checkExistAlias(char*);		// -1 does not exist, else return index position;
+int checkExistAlias(char*);			// -1 does not exist, else return index position;
 int checkAliasLoop();				//0 is loop, 1 is not loop;
-void addAlias(char*, char*);	
+void addAlias(char*, char*, int);	
 void deleteAlias(char*);
 void showAlias();					//display all alias in tab
-//char* noquoto(char*);
-void processAlias(char*);			//check if there is a alias
-int alias_input(int cmd);
+char* noquoto(char*);
+void processAlias(char*);			//check if input is an alias
+int alias_input(char*);
+
 // -------------------------------------
 
+extern COMMAND comtab[];
 extern int yylex();
 extern int yylineno;
 extern char* yytext;
@@ -67,7 +93,18 @@ extern int aliasLoop;				//return 1 is loop, 0 is not loop
 extern int aliasNumb;				// count number of alias in tab
 extern char *aliasname;
 extern char *aliastr;
-extern char *strAlias;
+
+// ------------ something else ------------
+
+extern int inputd;					// 0 stdin, 1 string, 2 files
+extern int outputd;					// 0 stdout, 1 string, 2 files
+extern char *unknowStr;
+
+// ------------- read string as command ----------
+typedef struct yy_buffer_state * YY_BUFFER_STATE;
+extern int yyparse();
+extern YY_BUFFER_STATE yy_scan_string(char * str);
+extern void yy_delete_buffer(YY_BUFFER_STATE buffer);
 
 #endif
 

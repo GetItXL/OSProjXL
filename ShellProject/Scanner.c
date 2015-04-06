@@ -15,24 +15,33 @@ char *bistr;
 char *bistr2;
 
 int CMD;
+YY_BUFFER_STATE buffer;
 
 int main(void) 
 {
+	/*
+	 char string[] = "String to be parsed.";
+    YY_BUFFER_STATE buffer = yy_scan_string(string);
+    yyparse();
+    yy_delete_buffer(buffer);
+    return 0;
+    */
+
+	
 	shell_init();
 	while(1){
 		printPrompt();
-
-		//This calls yyparse()
 		CMD = getCommand();
+		//yy_delete_buffer(buffer);	
 		switch(CMD)		//check if its a excutible command that follows all the rules.
 		{
+				
 			//case BYE:		exit(1);
 			case ERROR: 	recover_from_errors();
 							break;
 			case OK:		processCommand();
 							break;
 		}
-		
 	}
 	return 0;
 	
@@ -40,13 +49,13 @@ int main(void)
 
 
 
-
-void print(void){	printf("word\n");}
-
 void shell_init()
 {	
+	bicmd = 0;
+	builtin = 0;
 	aliasNumb = 0;
-
+	inputd = 0;
+	outputd = 0;
 	//aliastab[MAX] = {0};
 	// init all variables.
 	// define (allocate storage) for some var/tables 
@@ -59,9 +68,7 @@ void shell_init()
 }
 
 void printPrompt(){	 printf("%s :> ",getcwd(NULL, 0));}
-// {
-// 	printf("shell < ");
-// }
+
 
 int getCommand()
 {
@@ -70,10 +77,19 @@ int getCommand()
 	//The value is 1 if parsing failed because of invalid input, i.e., input that contains a syntax error or that causes YYABORT to be invoked.
 	
 	// maybe need one variable to check alias here?
-	if (yyparse())							
+
+	if (yyparse())	
+	{
+		//yy_delete_buffer(buffer);					
 		return (ERROR);
+	}
 	else
+	{
+		//yy_delete_buffer(buffer);
 		return (OK);		//The value returned by yyparse is 0 if parsing was successfu					
+	}	
+	
+	
 }
 
 void init_scanner_and_parser(){
@@ -85,6 +101,9 @@ void init_scanner_and_parser(){
 	aliasname = '\0';
 	aliastr = '\0';
 	aliasLoop = 0;				//return 1 is loop, 0 is not loop
+	inputd = 0;
+	outputd = 0;
+	//yy_delete_buffer(buffer);	
 }
 
 
@@ -96,22 +115,26 @@ void recover_from_errors()
 	//In this case you have to recover by “eating” 
 	// the rest of the command.
 	// To do this: use yylex() directly.
-	printf("recover_from_errors");
+	printf("recover_from_errors\n");
+	yylex();
+	//exit(1);
 }
 
 void processCommand()
 {	
-	// if (builtin) 
-	// 	do_it();
-	// else
-	// 	execute_it();	
-	
 	//printf("processCommand\n");
 	printf("bicmd: %d\n", bicmd);
 	//printf("builtin: %d\n", builtin);
 
+
 	if(builtin)
-		do_it();	
+		do_it();
+	else
+	{
+		execute_it();
+	}
+	
+	//yy_delete_buffer(buffer);	
 }
 
 
@@ -136,23 +159,19 @@ void do_it(){
 		case ALIAS :
 			showAlias();
 			break;
-		case WORD :
-			printf("word in scanner.c\n");
-			processAlias(strAlias);
-			break;
 		case UNALIAS :
 			deleteAlias(aliasname);
 			break;
 		case ALIASADDSTR :
-			addAlias(aliasname, aliastr);
+			addAlias(aliasname, aliastr, 0);
 			break;
 		case ALIASADD :
-			addAlias(aliasname, aliastr);
+			addAlias(aliasname, aliastr, 1);
 			break;
 		case EOL:
 			break;
 		default:	
-				printf("unexpected error!");
+			printf("unexpected error!");
 				//exit(1);
 
 	}
@@ -180,3 +199,84 @@ void printEnv(){
         printf("%s\n", *env);
 }
 
+// ------------------- not builtin command --------------
+
+void execute_it()
+{
+	
+	// Handle  command execution, pipelining, i/o redirection, and background processing. 
+	// Utilize a command table whose components are plugged in during parsing by yacc. 
+
+/* 
+	 * Check Command Accessability and Executability
+	*/
+	if( ! Executable() ) {  
+		//use access() system call with X_OK
+		printf("Command not Found!\n");
+		return;
+	}
+	else
+	{
+		printf("Command! Found!\n");
+		if(builtin == 1)
+		{
+			processAlias(unknowStr);			// find the right command
+			printf("after prcocessAlias: %s\n",aliastr);
+			buffer = yy_scan_string(aliastr);
+    		//yylex();
+    		//yylex();
+   		//	yy_delete_buffer(buffer);
+		}
+		else
+		{
+			printf("error!\n");
+			return;
+		}
+			printf("after excute_int");
+	}
+	/*
+	 * Check io file existence in case of io-redirection.
+	*/
+	if( check_in_file()==ERROR ) {
+		printf("Cann't read from ");
+		return;
+	}
+	if( check_out_file()==ERROR ) {
+		printf("Cann't write to ");
+		return;
+	}
+	
+	
+	//Build up the pipeline (create and set up pipe end points (using pipe, dup) 
+	//Process background
+}
+
+int Executable()
+{
+	// first check if it's an alias
+
+	if(checkExistAlias(unknowStr)!= -1)
+	{
+		//printf("Its alias");
+		builtin = 1;
+		return 1;	
+	}
+	else
+	{
+
+	}
+			// check if it's a system call
+	
+		
+	return 0;
+} 
+
+int check_in_file()
+{
+	return 0;
+}
+
+int check_out_file()
+{
+	return 0;
+}
