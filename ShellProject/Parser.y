@@ -7,9 +7,9 @@ int yydebug=1;
 
 
 extern int yylex();
-void yyerror (char *s);
 
-char* noquote(char *s);
+void yyerror (char *s);
+//char* noquote(char *s);
 
 //#define YYDEBUG_LEXER_TEXT yytext
 int yylineno;
@@ -205,20 +205,12 @@ char* noquoto(char* s)
 }
 */
 
+
 void yyerror (char *s) 
 {
 	fprintf(stderr, "line %d: %s\n", yylineno, s);
 } 
 
-/*
-int main(void)
-{
-	//yydebug= 1;
-	int temp = yyparse();
-	//printf("yyparse is %d \n", temp);
-
-	return temp;
-}*/
 
 
 /*

@@ -20,12 +20,13 @@ YY_BUFFER_STATE buffer;
 int main(void) 
 {
 	/*
-	 char string[] = "String to be parsed.";
-    YY_BUFFER_STATE buffer = yy_scan_string(string);
-    yyparse();
-    yy_delete_buffer(buffer);
+		char string[] = "\"sdfa\"\n String";
+	    YY_BUFFER_STATE buffer = yy_scan_string(string);
+	    yyparse();
+	    yy_delete_buffer(buffer);
     return 0;
     */
+
 
 	
 	shell_init();
@@ -44,6 +45,7 @@ int main(void)
 		}
 	}
 	return 0;
+	
 	
 }
 
@@ -73,7 +75,6 @@ void printPrompt(){	 printf("%s :> ",getcwd(NULL, 0));}
 int getCommand()
 {
 	init_scanner_and_parser(); 
-
 	//The value is 1 if parsing failed because of invalid input, i.e., input that contains a syntax error or that causes YYABORT to be invoked.
 	
 	// maybe need one variable to check alias here?
@@ -103,7 +104,6 @@ void init_scanner_and_parser(){
 	aliasLoop = 0;				//return 1 is loop, 0 is not loop
 	inputd = 0;
 	outputd = 0;
-	//yy_delete_buffer(buffer);	
 }
 
 
@@ -116,7 +116,23 @@ void recover_from_errors()
 	// the rest of the command.
 	// To do this: use yylex() directly.
 	printf("recover_from_errors\n");
-	yylex();
+	yy_delete_buffer(buffer);	
+	printf("delete buffer\n");
+		if(builtin == 0 )
+		{
+			builtin = 1;
+			printf("I have idea?\n");
+			//yylex();
+			yyrestart(stdin);
+			
+		}
+		else
+		{
+			printf("I have no idea\n");
+		}
+
+	//yy_delete_buffer();
+	//yylex();
 	//exit(1);
 }
 
@@ -223,6 +239,7 @@ void execute_it()
 			processAlias(unknowStr);			// find the right command
 			printf("after prcocessAlias: %s\n",aliastr);
 			buffer = yy_scan_string(aliastr);
+	
     		//yylex();
     		//yylex();
    		//	yy_delete_buffer(buffer);
@@ -232,7 +249,7 @@ void execute_it()
 			printf("error!\n");
 			return;
 		}
-			printf("after excute_int");
+			printf("after excute_int\n");
 	}
 	/*
 	 * Check io file existence in case of io-redirection.
