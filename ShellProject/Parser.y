@@ -164,7 +164,7 @@ int yydebug;
 					//comtab[currcmd].atptr = Allocate(ARGTAB);
 
 					unknowStr = $1;
-					printf("nonbuiltin without arg");
+					printf("nonbuiltin without arg\n");
 					YYACCEPT;
 
 				}
@@ -176,7 +176,7 @@ int yydebug;
 					//comtab[currcmd].atptr = Allocate(ARGTAB);
 
 					unknowStr = $1;
-					printf("nonbuiltin without arg");
+					printf("nonbuiltin without arg\n");
 					YYACCEPT;
 				}
 			;
@@ -244,6 +244,7 @@ char* noquoto(char* s)
 
 void yyerror (char *s) 
 {
+	printf("lalal___\n");
 	fprintf(stderr, "line %d: %s\n", yylineno, s);
 } 
 

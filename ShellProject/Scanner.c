@@ -65,12 +65,13 @@ int main(void)
 		//yy_delete_buffer(buffer);	
 		switch(CMD)		//check if its a excutible command that follows all the rules.
 		{
-				
-			//case BYE:		exit(1);
 			case ERROR: 	recover_from_errors();
 							break;
 			case OK:		processCommand();
 							break;
+			case BYE:		exit(1);
+							break;
+			default:		printf("Unexpected Error! 0x0\n");
 
 		}
 	}
@@ -108,18 +109,15 @@ int getCommand()
 	init_scanner_and_parser(); 
 	//The value is 1 if parsing failed because of invalid input, i.e., input that contains a syntax error or that causes YYABORT to be invoked.
 	
-
-
 	if (yyparse())	
 	{
-		return (ERROR);
+		return (understand_errors());
+		//return (ERROR);
 	}
 	else
 	{
 		return (OK);		//The value returned by yyparse is 0 if parsing was successfu					
 	}	
-	
-	
 }
 
 void init_scanner_and_parser(){
@@ -133,7 +131,6 @@ void init_scanner_and_parser(){
 	alORstr = 0;				//return 1 is alias, 0 is string
 	inputd = 0;
 	outputd = 0;
-
 
 	/** Avoid using nested for loop??
 	  * may change comtab to be a pointer (COMMAND *comtab[]) instead
@@ -170,12 +167,23 @@ void recover_from_errors()
 	printf("recover_from_errors\n");
 	yy_delete_buffer(buffer);	
 	//printf("delete buffer\n");
-		
+	char* temp = "nothing here";
+	yyerror(temp);
 	printf("I have idea?\n");
 	yyrestart(stdin);					//restart to stdin !!!
+
 	//yy_delete_buffer();
 	//yylex();
 	//exit(1);
+}
+
+int understand_errors()
+{
+	//if it's an error cause by alias
+	
+	//if it's an error syntex error;
+	return (ERROR);
+
 }
 
 void processCommand()
@@ -274,7 +282,7 @@ void execute_it()
 /* 
 	 * Check Command Accessability and Executability
 	*/
-	if(!executable() ) {  
+	if(executable() == (ERROR)) {  
 		//use access() system call with X_OK
 		printf("Command not Found!\n");
 		return;
@@ -288,7 +296,6 @@ void execute_it()
 			alProce = 1;						// now is processing on alias
 			if(!alORstr)							// if alias is a string
 			{
-
 				char *temp = noquoto(aliastr);
 				printf("is string %s\n",temp );
 				buffer = yy_scan_string(temp);
@@ -298,6 +305,33 @@ void execute_it()
 				printf("is alias %s\n",aliastr );
 				buffer = yy_scan_string(aliastr);
 			}
+		}
+		else
+		{
+			pid_t pid;
+			int status;
+			pid = fork(); //create a child process
+
+			if(pid){ //If it's the parent process
+				printf("I'm waiting on the child process\n");
+				pid = wait(&status);
+				printf("child process %d finished\n", pid);
+			}
+			else{	//if it's the child process, execute cmd
+
+				//Debug
+				int i;
+				for(i = 0; i < sizeof(comtab[currcmd].args); i++){
+					if(comtab[currcmd].args[i] != NULL)
+						printf(" %s", comtab[currcmd].args[i]);
+				}
+				printf("\n");
+
+
+				//Searches for the cmd automatically
+				execvp(comtab[currcmd].comName, comtab[currcmd].args);
+			}
+
 		}
 		/** Modified by Lulu
 		  * commented this out to test ls
@@ -324,7 +358,7 @@ void execute_it()
 	/** Only tested with ls (no arg).
 	  * Need to add pipeline, background, io redirection
 	  * Need to modify parser to allow multiple args */
-
+/*
 	pid_t pid;
 	int status;
 	pid = fork(); //create a child process
@@ -350,7 +384,7 @@ void execute_it()
 	}
 
 
-
+*/
 	//Build up the pipeline (create and set up pipe end points (using pipe, dup) 
 	//Process background
 }
@@ -361,16 +395,16 @@ int executable()
 
 	if(checkExistAlias(unknowStr)!= -1)
 	{
-		printf("in executable() Its alias");
+		printf("in executable() Its alias\n");
 		builtin = 1;
-		return 1;	
+		return (OK);	
 	}
 	else								// check whether it's a system call
 	{
 		//if(access(comtab[currcmd].comName, X_OK) == 0){ //0 is returned on success, and -1 is returned on failure
 			//If cmd exists and we can access it
 
-			return 1;
+			return (OK);
 		//} 
 
 		//Can I use this?? Or do I have to use access()?

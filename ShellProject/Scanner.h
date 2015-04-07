@@ -53,8 +53,11 @@ void print(void);
 void shell_init();
 void printPrompt();
 int getCommand();
+
 void init_scanner_and_parser();
 void recover_from_errors();
+int understand_errors();
+
 void processCommand();
 void do_it();
 void gohome();
@@ -109,7 +112,7 @@ extern int alProce;				// 0 is not alias processing, 1 is processing
 extern int inputd;					// 0 stdin, 1 string, 2 files
 extern int outputd;					// 0 stdout, 1 string, 2 files
 extern char *unknowStr;
-
+extern void yyerror(char *);
 // ------------- read string as command ----------
 
 typedef struct yy_buffer_state * YY_BUFFER_STATE;
