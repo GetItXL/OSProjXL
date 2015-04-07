@@ -25,6 +25,10 @@
 "<"								{	return READFILE;}
 ">"								{	return OUTFILE;}
 "|"								{	return PIPE;}
+"&"								{	return BACKGROUND;}
+"$"								{	return DOL;}
+"{"								{	return LBRAC;}
+"}"								{	return RBRAC;}
 
 [a-zA-Z0-9./:~]+				{	yylval.string = strdup(yytext);		return WORD;	}
 ["][a-zA-Z0-9<>|\\& ./~:]+["]  	{ 	yylval.string = strdup(yytext);	 	return STRING;	}

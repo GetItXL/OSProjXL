@@ -55,10 +55,10 @@ int helper(char *str, int refalias, int times)
 		//need to check if your tail = my name;
 		
 		int temp = strcmp(aliasname,str);
-		printf("hahaha %s and %s, %d\n",aliasname,str,temp);
+		//printf("hahaha %s and %s, %d\n",aliasname,str,temp);
 		if(strcmp(aliasname,str) == 0)
 		{
-			printf("dfamakehahaha\n");
+			//printf("dfamakehahaha\n");
 			return -1;
 		}
 		else

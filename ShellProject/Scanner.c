@@ -5,6 +5,16 @@
 #include "alias.c"
 //#include <stdlib.h>
 //#include "y.tab.h"
+#include <signal.h>
+
+//---------------- This is for handling Ctrl+C -------
+typedef void (*sighandler_t)(int);
+void signalHandling(int signo)
+{
+ printf("\n");
+ printPrompt();
+ fflush(stdout);
+}
 
 
 
@@ -14,6 +24,11 @@ int bicmd;
 char *bistr;
 char *bistr2;
 int alProce;	
+
+//---- test ---
+COMMAND comtab[MAXCMD];
+int currcmd;
+int currarg;
 
 int CMD;
 YY_BUFFER_STATE buffer;
@@ -27,6 +42,12 @@ int main(void)
 	    yy_delete_buffer(buffer);
     return 0;
     */
+
+    //For handling Ctrl + C
+	signal(SIGINT, SIG_IGN);
+	signal(SIGINT, signalHandling);
+	//May need to use sigaction instead later.
+	/** Move this to shell_init()*/
 
 	
 	shell_init();
@@ -112,7 +133,11 @@ void init_scanner_and_parser(){
 	alORstr = 0;				//return 1 is alias, 0 is string
 	inputd = 0;
 	outputd = 0;
-	//alProce; = 0; 				// does not process alias	
+
+
+	//Need to initialize comtab?
+	currcmd = 0;
+	currarg = 1; //Do this here or in parser.y. Beacuse the first arg is reserved for the cmd
 }
 
 
@@ -227,7 +252,7 @@ void execute_it()
 /* 
 	 * Check Command Accessability and Executability
 	*/
-	if( ! Executable() ) {  
+	if(!executable() ) {  
 		//use access() system call with X_OK
 		printf("Command not Found!\n");
 		return;
@@ -252,13 +277,15 @@ void execute_it()
 				buffer = yy_scan_string(aliastr);
 			}
 		}
+		/** Modified by Lulu
+		  * commented this out to test ls
 		else
 		{
 			printf("error!\n");
 			return;
 		}
 			printf("after excute_int\n");
-
+		*/
 	}
 	/*
 	 * Check io file existence in case of io-redirection.
@@ -272,12 +299,33 @@ void execute_it()
 		return;
 	}
 	
-	
+	/** Only tested with ls (no arg).
+	  * Need to add pipeline, background, io redirection
+	  * Need to modify parser to allow multiple args */
+
+	//Need to put this in a proper place
+	comtab[currcmd].args[0] = comtab[currcmd].comName;
+	pid_t pid;
+	int status;
+	pid = fork(); //create a child process
+
+	if(pid){ //If it's the parent process
+		printf("I'm waiting on the child process\n");
+		pid = wait(&status);
+		printf("child process %d finished\n", pid);
+	}
+	else{	//if it's the child process, execute cmd
+		//Searches for the cmd automatically
+		execvp(comtab[currcmd].comName, comtab[currcmd].args);
+	}
+
+
+
 	//Build up the pipeline (create and set up pipe end points (using pipe, dup) 
 	//Process background
 }
 
-int Executable()
+int executable()
 {
 	// first check if it's an alias
 
@@ -289,7 +337,10 @@ int Executable()
 	}
 	else								// check whether it's a system call
 	{
-
+		//if(access(comtab[currcmd].comName, X_OK) == 0){ //0 is returned on success, and -1 is returned on failure
+			//If cmd exists and we can access it
+			return 1;
+		//} 
 	}
 				
 	return 0;
