@@ -79,7 +79,7 @@ int yydebug;
 				{ 	
 					bicmd = CDHOME;
 					builtin = 1;
-					printf("CD no para\n");
+					printf("CD no para no eol\n");
 					YYACCEPT; 
 				}
 			|	CD WORD 

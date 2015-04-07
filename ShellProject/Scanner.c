@@ -13,6 +13,7 @@ int builtin;
 int bicmd;
 char *bistr;
 char *bistr2;
+int alProce;	
 
 int CMD;
 YY_BUFFER_STATE buffer;
@@ -27,11 +28,18 @@ int main(void)
     return 0;
     */
 
-
 	
 	shell_init();
 	while(1){
-		printPrompt();
+
+		//printf("alProce is %d\n", alProce);
+		if(!alProce)
+		{
+			printPrompt();
+		}	
+		
+		//printPrompt();
+
 		CMD = getCommand();
 		//yy_delete_buffer(buffer);	
 		switch(CMD)		//check if its a excutible command that follows all the rules.
@@ -42,6 +50,7 @@ int main(void)
 							break;
 			case OK:		processCommand();
 							break;
+
 		}
 	}
 	return 0;
@@ -58,6 +67,7 @@ void shell_init()
 	aliasNumb = 0;
 	inputd = 0;
 	outputd = 0;
+	alProce = 0; 			// does not process alias;
 	//aliastab[MAX] = {0};
 	// init all variables.
 	// define (allocate storage) for some var/tables 
@@ -77,16 +87,14 @@ int getCommand()
 	init_scanner_and_parser(); 
 	//The value is 1 if parsing failed because of invalid input, i.e., input that contains a syntax error or that causes YYABORT to be invoked.
 	
-	// maybe need one variable to check alias here?
+
 
 	if (yyparse())	
 	{
-		//yy_delete_buffer(buffer);					
 		return (ERROR);
 	}
 	else
 	{
-		//yy_delete_buffer(buffer);
 		return (OK);		//The value returned by yyparse is 0 if parsing was successfu					
 	}	
 	
@@ -101,9 +109,10 @@ void init_scanner_and_parser(){
 	bistr2 = '\0';
 	aliasname = '\0';
 	aliastr = '\0';
-	aliasLoop = 0;				//return 1 is loop, 0 is not loop
+	alORstr = 0;				//return 1 is alias, 0 is string
 	inputd = 0;
 	outputd = 0;
+	//alProce; = 0; 				// does not process alias	
 }
 
 
@@ -131,7 +140,6 @@ void processCommand()
 	//printf("processCommand\n");
 	printf("bicmd: %d\n", bicmd);
 	//printf("builtin: %d\n", builtin);
-
 
 	if(builtin)
 		do_it();
@@ -181,6 +189,8 @@ void do_it(){
 				//exit(1);
 
 	}
+	if(alProce==1)
+		alProce=0;
 }
 
 
@@ -209,7 +219,8 @@ void printEnv(){
 
 void execute_it()
 {
-	
+	if(alProce==1)			// extra command
+		alProce=0;
 	// Handle  command execution, pipelining, i/o redirection, and background processing. 
 	// Utilize a command table whose components are plugged in during parsing by yacc. 
 
@@ -224,15 +235,22 @@ void execute_it()
 	else
 	{
 		printf("Command! Found!\n");
-		if(builtin == 1)
+		if(builtin == 1)					//asume it can only be alias
 		{
 			processAlias(unknowStr);			// find the right command
-			printf("after prcocessAlias: %s\n",aliastr);
-			buffer = yy_scan_string(aliastr);
-	
-    		//yylex();
-    		//yylex();
-   		//	yy_delete_buffer(buffer);
+			alProce = 1;						// now is processing on alias
+			if(!alORstr)							// if alias is a string
+			{
+
+				char *temp = noquoto(aliastr);
+				printf("is string %s\n",temp );
+				buffer = yy_scan_string(temp);
+			}
+			else
+			{
+				printf("is alias %s\n",aliastr );
+				buffer = yy_scan_string(aliastr);
+			}
 		}
 		else
 		{
@@ -240,6 +258,7 @@ void execute_it()
 			return;
 		}
 			printf("after excute_int\n");
+
 	}
 	/*
 	 * Check io file existence in case of io-redirection.
@@ -264,17 +283,15 @@ int Executable()
 
 	if(checkExistAlias(unknowStr)!= -1)
 	{
-		//printf("Its alias");
+		printf("in executable() Its alias");
 		builtin = 1;
 		return 1;	
 	}
-	else
+	else								// check whether it's a system call
 	{
 
 	}
-			// check if it's a system call
-	
-		
+				
 	return 0;
 } 
 
@@ -287,3 +304,24 @@ int check_out_file()
 {
 	return 0;
 }
+
+
+char* noquoto(char* s)
+{
+	char temp[100];
+	int length = strlen(s);
+	printf("length is %d\n", length);
+
+	for(int i = 0; i < length-2; i++)
+	{
+		temp[i] = s[i+1];
+		//printf("char %c\n", temp[i-1]);
+	}
+	printf("new string %s\n", temp);
+
+
+	return temp;
+}
+
+
+

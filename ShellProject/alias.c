@@ -10,7 +10,7 @@
 struct alias aliastab[MAX];
 char *aliasname;
 char *aliastr;
-int aliasLoop;				//return 1 is loop, 0 is not loop
+int alORstr;				//return 1 is loop, 0 is not loop
 int aliasNumb;
 char *unknowStr;
 int inputd;
@@ -42,15 +42,29 @@ int helper(char *str, int refalias, int times)
 	{
 		for(int i = 0; i < aliasNumb; i++)
 		{
+			if(strcmp(aliastab[i].alname,str) == 0)							// this is a loop
+				return ERROR;
 			if(strcmp(aliastab[i].alname,str) == 0)				// if the string is in the alias table
 			{													// recursively check for 
-				if(helper(aliastab[i].alstr, aliastab[i].refalias, ++times))		
+				if(helper(aliastab[i].alstr, aliastab[i].refalias, ++times) == OK)		
 					return OK;
 				else
 					return ERROR;
 			}
 		}
-		return (OK);
+		//need to check if your tail = my name;
+		
+		int temp = strcmp(aliasname,str);
+		printf("hahaha %s and %s, %d\n",aliasname,str,temp);
+		if(strcmp(aliasname,str) == 0)
+		{
+			printf("dfamakehahaha\n");
+			return -1;
+		}
+		else
+			return (OK);
+
+			
 	}
 	else
 		return (OK);
@@ -64,10 +78,13 @@ int checkAliasLoop(char *str, int refalias)
 		{
 			if(strcmp(aliastab[i].alname,str) == 0)				// if my string is your name
 			{													// recursively to check if your string is other's name
-				if(helper(aliastab[i].alstr, aliastab[i].refalias, 1))		
-					return OK;
+				if(helper(aliastab[i].alstr, aliastab[i].refalias, 1) == OK)		
+				{
+					//	printf("lsdfadaflaal\n");
+						return OK;
+				}
 				else
-					return ERROR;
+					return ERROR;	
 			}	
 		}
 		return (OK);
@@ -93,22 +110,21 @@ void addAlias(char* name, char* str, int refalias)
 			//printf("aliasNumber is %d\n", aliasNumb);
 			aliastab[aliasNumb].alname = name;
 			aliastab[aliasNumb].alstr = str;
-
+			if(refalias == 0)					//refer to a string 
+				aliastab[aliasNumb].refalias = 0;
+			else
+				aliastab[aliasNumb].refalias = 1;
 			aliasNumb++;
 		}
 		else
 		{
 			aliastab[aliasIndex].alstr = str;
+			if(refalias == 0)					//refer to a string 
+				aliastab[aliasIndex].refalias = 0;
+			else
+				aliastab[aliasIndex].refalias = 1;	
 		}
 
-		if(refalias == 0)					//refer to a string 
-		{
-			aliastab[aliasNumb].refalias = 0;
-		}
-		else
-		{
-			aliastab[aliasNumb].refalias = 1;
-		}
 	}
 	else
 	{
@@ -157,9 +173,13 @@ void processAlias(char* unknowStr)
 	{	
 		cmd = aliastab[i].alstr;	
 		aliastr = aliastab[i].alstr;
+		alORstr = aliastab[i].refalias;
 	}
 	else
-		printf("error in the alias!!!\n");
+	{
+		printf("Error! cannot find alias!!!\n");
+		return;
+	}
 	
 	while (1) {
 		if (alias_input(cmd) > -1)	
@@ -200,22 +220,3 @@ int alias_input(char* cmd)
 	
 	return -1;
 }
-/*
-char* noquoto(char* s)
-{
-	char temp[100];
-	int length = strlen(s);
-	printf("length is %d\n", length);
-
-	for(int i = 0; i < length-2; i++)
-	{
-		temp[i] = s[i+1];
-		//printf("char %c\n", temp[i-1]);
-	}
-	printf("new string %s\n", temp);
-
-
-	return temp;
-}
-
-*/
