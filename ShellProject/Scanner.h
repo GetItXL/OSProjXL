@@ -20,16 +20,18 @@
 //#define LOGOUT 352
 //You can either define it here or include "y.tab.h" which has the BYE definition already
 
+/*
 typedef struct comargs {
 	char* args[MAXARGS];
-} ARGTAB;
+} ARGTAB;*/
 
 
 // command line structure
 typedef struct com {
 	char* comName;				//name of the command
 	int countArgs;				//count of its arguments
-	ARGTAB *atptr;				//pointer to a list of null terminated arguments
+	//ARGTAB *atptr;				//pointer to a list of null terminated arguments
+	char *args[MAXARGS];
 	int infd;					//intput file name
 	int outfd;					//output file name
 } COMMAND;
@@ -89,6 +91,7 @@ extern int bicmd;
 extern char *bistr;
 extern char *bistr2;
 extern int currcmd;
+extern int currarg;
 
 // --------- global variables for alias ------------
 extern struct alias aliastab[MAX];	// table to store alias 

@@ -27,6 +27,7 @@ char *bistr2;
 //---- test ---
 COMMAND comtab[MAXCMD];
 int currcmd;
+int currarg;
 
 int CMD;
 YY_BUFFER_STATE buffer;
@@ -126,6 +127,7 @@ void init_scanner_and_parser(){
 
 	//Need to initialize comtab?
 	currcmd = 0;
+	currarg = 1; //Do this here or in parser.y. Beacuse the first arg is reserved for the cmd
 }
 
 
@@ -281,6 +283,8 @@ void execute_it()
 	  * Need to add pipeline, background, io redirection
 	  * Need to modify parser to allow multiple args */
 
+	//Need to put this in a proper place
+	comtab[currcmd].args[0] = comtab[currcmd].comName;
 	pid_t pid;
 	int status;
 	pid = fork(); //create a child process
@@ -292,7 +296,7 @@ void execute_it()
 	}
 	else{	//if it's the child process, execute cmd
 		//Searches for the cmd automatically
-		execvp(comtab[currcmd].comName, comtab[currcmd].atptr->args);
+		execvp(comtab[currcmd].comName, comtab[currcmd].args);
 	}
 
 

@@ -17,6 +17,7 @@ int yydebug;
 
 //currcmd = 0;
 
+
 %}
 
 %union {
