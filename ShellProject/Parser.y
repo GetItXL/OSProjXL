@@ -15,7 +15,7 @@ void yyerror (char *s);
 int yylineno;
 int yydebug;
 
-
+//currcmd = 0;
 
 %}
 
@@ -25,7 +25,7 @@ int yydebug;
 }
 
 /* default yylval type is int (num) */
-%token <num> BYE SETENV PRINTENV CD UNSETENV ALIAS UNALIAS EOL READFILE OUTFILE PIPE
+%token <num> BYE SETENV PRINTENV CD UNSETENV ALIAS UNALIAS EOL READFILE OUTFILE PIPE BACKGROUND DOL LBRAC RBRAC
 %token <string> WORD METACHAR STRING
 
 
@@ -156,16 +156,22 @@ int yydebug;
 	other_cmd:
 				WORD EOL			//the word here may be alias or system call command so we need to call something
 				{
-					bicmd = WORD;
 					builtin = 0;
+					comtab[currcmd].comName = $1;
+					comtab[currcmd].countArgs = 0;
+					//comtab[currcmd].atptr = Allocate(ARGTAB);
+
 					unknowStr = $1;
 					printf("WORD para\n");
 					YYACCEPT;
 				}
 			|	WORD 				//testing code
 				{
-					bicmd = WORD;
 					builtin = 0;
+					comtab[currcmd].comName = $1;
+					comtab[currcmd].countArgs = 0;
+					//comtab[currcmd].atptr = Allocate(ARGTAB);
+
 					unknowStr = $1;
 					printf("WORD without endline\n");
 					YYACCEPT;

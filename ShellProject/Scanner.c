@@ -5,6 +5,16 @@
 #include "alias.c"
 //#include <stdlib.h>
 //#include "y.tab.h"
+#include <signal.h>
+
+//---------------- This is for handling Ctrl+C -------
+typedef void (*sighandler_t)(int);
+void signalHandling(int signo)
+{
+ printf("\n");
+ printPrompt();
+ fflush(stdout);
+}
 
 
 
@@ -13,6 +23,10 @@ int builtin;
 int bicmd;
 char *bistr;
 char *bistr2;
+
+//---- test ---
+COMMAND comtab[MAXCMD];
+int currcmd;
 
 int CMD;
 YY_BUFFER_STATE buffer;
@@ -27,6 +41,11 @@ int main(void)
     return 0;
     */
 
+    //For handling Ctrl + C
+	signal(SIGINT, SIG_IGN);
+	signal(SIGINT, signalHandling);
+	//May need to use sigaction instead later.
+	/** Move this to shell_init()*/
 
 	
 	shell_init();
@@ -104,6 +123,9 @@ void init_scanner_and_parser(){
 	aliasLoop = 0;				//return 1 is loop, 0 is not loop
 	inputd = 0;
 	outputd = 0;
+
+	//Need to initialize comtab?
+	currcmd = 0;
 }
 
 
@@ -216,7 +238,7 @@ void execute_it()
 /* 
 	 * Check Command Accessability and Executability
 	*/
-	if( ! Executable() ) {  
+	if(!executable() ) {  
 		//use access() system call with X_OK
 		printf("Command not Found!\n");
 		return;
@@ -234,12 +256,14 @@ void execute_it()
     		//yylex();
    		//	yy_delete_buffer(buffer);
 		}
+		/** Modified by Lulu
+		  * commented this out to test ls
 		else
 		{
 			printf("error!\n");
 			return;
 		}
-			printf("after excute_int\n");
+			printf("after excute_int\n");*/
 	}
 	/*
 	 * Check io file existence in case of io-redirection.
@@ -253,12 +277,31 @@ void execute_it()
 		return;
 	}
 	
-	
+	/** Only tested with ls (no arg).
+	  * Need to add pipeline, background, io redirection
+	  * Need to modify parser to allow multiple args */
+
+	pid_t pid;
+	int status;
+	pid = fork(); //create a child process
+
+	if(pid){ //If it's the parent process
+		printf("I'm waiting on the child process\n");
+		pid = wait(&status);
+		printf("child process %d finished\n", pid);
+	}
+	else{	//if it's the child process, execute cmd
+		//Searches for the cmd automatically
+		execvp(comtab[currcmd].comName, comtab[currcmd].atptr->args);
+	}
+
+
+
 	//Build up the pipeline (create and set up pipe end points (using pipe, dup) 
 	//Process background
 }
 
-int Executable()
+int executable()
 {
 	// first check if it's an alias
 
@@ -270,7 +313,10 @@ int Executable()
 	}
 	else
 	{
-
+		//if(access(comtab[currcmd].comName, X_OK) == 0){ //0 is returned on success, and -1 is returned on failure
+			//If cmd exists and we can access it
+			return 1;
+		//} 
 	}
 			// check if it's a system call
 	

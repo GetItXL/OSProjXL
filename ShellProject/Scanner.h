@@ -10,6 +10,7 @@
 
 #define MAX 			100
 #define MAXARGS			300
+#define MAXCMD			100
 
 #define CDHOME 			350
 #define CDX 			351
@@ -61,7 +62,7 @@ void printEnv();
 void execute_it();
 int check_in_file();
 int check_out_file();
-int Executable();
+int executable();
 
 //------- function for alias -----------
 
@@ -87,6 +88,7 @@ extern int builtin;
 extern int bicmd;
 extern char *bistr;
 extern char *bistr2;
+extern int currcmd;
 
 // --------- global variables for alias ------------
 extern struct alias aliastab[MAX];	// table to store alias 
