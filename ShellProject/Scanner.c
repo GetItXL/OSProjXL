@@ -138,19 +138,19 @@ void init_scanner_and_parser(){
 	/** Avoid using nested for loop??
 	  * may change comtab to be a pointer (COMMAND *comtab[]) instead
 	  */
-	//Need to initialize comtab!!
 	
-	/* causes bus error
+	// If use sizeof(array), then bus error
 	int i, j;
-	for(i = 0; i < sizeof(comtab); i++){
+	for(i = 0; i < MAXCMD; i++){
 		comtab[i].comName = NULL;
 		comtab[i].countArgs = 0;
 		comtab[i].infd = 0;
 		comtab[i].outfd = 0;
-		for(j = 0; j < sizeof(comtab[i].args); j++){
+		//for(j = 0; j < sizeof(comtab[i].args); j++){
+		for(j = 0; j < MAXARGS; j++){
 			comtab[i].args[j] = NULL;
 		}
-	}*/
+	}
 
 	//This will work in here for now. 
 	//But for pipelining with multiple command, make sure to reset these in parser.y
@@ -369,8 +369,14 @@ int executable()
 	{
 		//if(access(comtab[currcmd].comName, X_OK) == 0){ //0 is returned on success, and -1 is returned on failure
 			//If cmd exists and we can access it
+
 			return 1;
 		//} 
+
+		//Can I use this?? Or do I have to use access()?
+		//if(execvp(comtab[currcmd].comName, comtab[currcmd].args) != -1){
+		//	return 1; //If the cmd can be found
+		//}
 	}
 				
 	return 0;
