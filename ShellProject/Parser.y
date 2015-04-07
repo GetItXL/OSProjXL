@@ -28,6 +28,7 @@ int yydebug;
 /* default yylval type is int (num) */
 %token <num> BYE SETENV PRINTENV CD UNSETENV ALIAS UNALIAS EOL READFILE OUTFILE PIPE BACKGROUND DOL LBRAC RBRAC
 %token <string> WORD METACHAR STRING
+%type <string> cmd_name
 
 
 
@@ -154,8 +155,8 @@ int yydebug;
 			;
 	
 
-	other_cmd:
-				WORD EOL			//the word here may be alias or system call command so we need to call something
+	other_cmd
+			:	cmd_name	//For cmd without any arg
 				{
 					builtin = 0;
 					comtab[currcmd].comName = $1;
@@ -163,43 +164,61 @@ int yydebug;
 					//comtab[currcmd].atptr = Allocate(ARGTAB);
 
 					unknowStr = $1;
-					printf("WORD para\n");
+					printf("nonbuiltin without arg");
 					YYACCEPT;
+
 				}
-			|	WORD 				//testing code
+			|	cmd_name arguments	//with arguments
 				{
 					builtin = 0;
 					comtab[currcmd].comName = $1;
-					comtab[currcmd].countArgs = 0;
+					//comtab[currcmd].countArgs = 0;
 					//comtab[currcmd].atptr = Allocate(ARGTAB);
 
 					unknowStr = $1;
-					printf("WORD without endline\n");
-					YYACCEPT;
-				}
-			|	STRING 				//testing code
-				{
-					bicmd = STRING;
-					builtin = 0;
-					unknowStr = $1;
-					printf("STRING without endline\n");
-					YYACCEPT;
-				}
-			|	STRING 	EOL			//testing code
-				{
-					bicmd = STRING;
-					builtin = 0;
-					unknowStr = $1;
-					printf("STRING  endline\n");
+					printf("nonbuiltin without arg");
 					YYACCEPT;
 				}
 			;
 
 
 
+	//Added the string case in only for the unknownStr, maybe don't need it??
+	cmd_name : 	WORD 	{$$ = $1;}
+			 |	STRING 	{$$ = $1;}
 
 
+	//Arguments can be one or more WORD/STRING
+	arguments
+			:	WORD 				
+				{
+					currarg = 1; //first element in arg[] is the cmd 
+					comtab[currcmd].args[currarg] = $1;
+					currarg++;
+					comtab[currcmd].countArgs++;
 
+				}
+			|	STRING 				
+				{
+					currarg = 1; //first element in arg[] is the cmd 
+					comtab[currcmd].args[currarg] = $1;
+					currarg++;
+					comtab[currcmd].countArgs++;
+				}
+			|	arguments WORD
+				{
+					comtab[currcmd].args[currarg] = $2;
+					currarg++;
+					comtab[currcmd].countArgs++;
+				}
+
+			|	arguments STRING
+				{
+					comtab[currcmd].args[currarg] = $2;
+					currarg++;
+					comtab[currcmd].countArgs++;
+				}
+			;
 
 %%	
 
@@ -238,4 +257,36 @@ void yyerror (char *s)
 			| words WORD
 				;*/
 
+/*
+	cmd_name
+			:	WORD
+			|	STRING
+			|	ENV
+			;
+	//May need this structure for cmd like this: ${ENV}
+*/
+
+
+/* don't think we still need this
+				WORD EOL			//the word here may be alias or system call command so we need to call something
+				{
+					builtin = 0;
+					comtab[currcmd].comName = $1;
+					comtab[currcmd].countArgs = 0;
+					//comtab[currcmd].atptr = Allocate(ARGTAB);
+
+					unknowStr = $1;
+					printf("WORD para\n");
+					YYACCEPT;
+				}
+
+							|	STRING 	EOL			//testing code
+				{
+					bicmd = STRING;
+					builtin = 0;
+					unknowStr = $1;
+					printf("STRING  endline\n");
+					YYACCEPT;
+				}
+*/
 

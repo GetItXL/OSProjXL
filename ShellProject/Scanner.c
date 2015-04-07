@@ -135,7 +135,25 @@ void init_scanner_and_parser(){
 	outputd = 0;
 
 
-	//Need to initialize comtab?
+	/** Avoid using nested for loop??
+	  * may change comtab to be a pointer (COMMAND *comtab[]) instead
+	  */
+	//Need to initialize comtab!!
+	
+	/* causes bus error
+	int i, j;
+	for(i = 0; i < sizeof(comtab); i++){
+		comtab[i].comName = NULL;
+		comtab[i].countArgs = 0;
+		comtab[i].infd = 0;
+		comtab[i].outfd = 0;
+		for(j = 0; j < sizeof(comtab[i].args); j++){
+			comtab[i].args[j] = NULL;
+		}
+	}*/
+
+	//This will work in here for now. 
+	//But for pipelining with multiple command, make sure to reset these in parser.y
 	currcmd = 0;
 	currarg = 1; //Do this here or in parser.y. Beacuse the first arg is reserved for the cmd
 }
@@ -244,6 +262,10 @@ void printEnv(){
 
 void execute_it()
 {
+
+	//Need to put this in a proper place
+	comtab[currcmd].args[0] = comtab[currcmd].comName;
+
 	if(alProce==1)			// extra command
 		alProce=0;
 	// Handle  command execution, pipelining, i/o redirection, and background processing. 
@@ -303,8 +325,6 @@ void execute_it()
 	  * Need to add pipeline, background, io redirection
 	  * Need to modify parser to allow multiple args */
 
-	//Need to put this in a proper place
-	comtab[currcmd].args[0] = comtab[currcmd].comName;
 	pid_t pid;
 	int status;
 	pid = fork(); //create a child process
@@ -315,6 +335,16 @@ void execute_it()
 		printf("child process %d finished\n", pid);
 	}
 	else{	//if it's the child process, execute cmd
+
+		//Debug
+		int i;
+		for(i = 0; i < sizeof(comtab[currcmd].args); i++){
+			if(comtab[currcmd].args[i] != NULL)
+				printf(" %s", comtab[currcmd].args[i]);
+		}
+		printf("\n");
+
+
 		//Searches for the cmd automatically
 		execvp(comtab[currcmd].comName, comtab[currcmd].args);
 	}
