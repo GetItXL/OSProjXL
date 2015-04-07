@@ -21,11 +21,11 @@ char* cmd;
 // ------------------ functions for alias -----------------------
 
 
-int checkExistAlias(char* name)
+int checkExistAlias(char* str)
 {
 	for(int i = 0; i < aliasNumb; i++)
 	{
-		if(strcmp(aliastab[i].alname,name) == 0)
+		if(strcmp(aliastab[i].alname,str) == 0)
 		{
 			return i;
 		}	
@@ -33,10 +33,47 @@ int checkExistAlias(char* name)
 	return -1;
 }
 
-
-int checkAliasLoop()
+int helper(char *str, int refalias, int times)
 {
-	return 0;
+	if(times > aliasNumb)										//base case
+		return ERROR;
+
+	if(refalias == 1)											// is an alias
+	{
+		for(int i = 0; i < aliasNumb; i++)
+		{
+			if(strcmp(aliastab[i].alname,str) == 0)				// if the string is in the alias table
+			{													// recursively check for 
+				if(helper(aliastab[i].alstr, aliastab[i].refalias, ++times))		
+					return OK;
+				else
+					return ERROR;
+			}
+		}
+		return (OK);
+	}
+	else
+		return (OK);
+}
+
+int checkAliasLoop(char *str, int refalias)
+{
+	if(refalias == 1)											// is an alias
+	{
+		for(int i = 0; i < aliasNumb; i++)
+		{
+			if(strcmp(aliastab[i].alname,str) == 0)				// if my string is your name
+			{													// recursively to check if your string is other's name
+				if(helper(aliastab[i].alstr, aliastab[i].refalias, 1))		
+					return OK;
+				else
+					return ERROR;
+			}	
+		}
+		return (OK);
+	}
+	else
+		return (OK);
 }		//1 is loop, 0 is not loop;
 
 
@@ -47,7 +84,7 @@ void addAlias(char* name, char* str, int refalias)
 	int aliasIndex = checkExistAlias(name);
 	//printf("aliasIndex is %d\n", aliasIndex);
 	
-	if(checkAliasLoop() == 0)
+	if(checkAliasLoop(str, refalias) == 0)
 	{
 		//printf("checkAliasLoop");
 		//temp = noquoto(str);
@@ -73,6 +110,10 @@ void addAlias(char* name, char* str, int refalias)
 			aliastab[aliasNumb].refalias = 1;
 		}
 	}
+	else
+	{
+		printf("Error! unable to add alias!\n");
+	}
 	//printf("checkAliasLoop is end");
 }
 
@@ -87,6 +128,8 @@ void deleteAlias(char* name)
      	{	aliastab[i] = aliastab[i+1];	}
      	aliasNumb--;
 	}
+	else
+		printf("Error! unable to delete alias!\n");
 }
 
 void showAlias()

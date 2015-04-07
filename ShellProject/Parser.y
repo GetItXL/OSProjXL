@@ -141,6 +141,16 @@ int yydebug;
 					printf("ALIASADDWORD %s\n",$3);
 					YYACCEPT;
 				}
+			|	UNALIAS WORD EOL
+				{
+					bicmd = UNALIAS;
+					builtin = 1;
+					aliasname = $2;
+					printf("UNALIAS no para\n");
+					YYACCEPT;
+				}
+
+			;
 	
 
 	other_cmd:

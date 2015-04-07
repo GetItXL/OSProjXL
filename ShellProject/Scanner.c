@@ -5,17 +5,8 @@
 #include "alias.c"
 //#include <stdlib.h>
 //#include "y.tab.h"
-#include <signal.h>
 
-//---------------- This is for handling Ctrl+C -------
-typedef void (*sighandler_t)(int);
-void signalHandling(int signo)
-{
 
-	printf("\n");
-	printPrompt();
-	fflush(stdout);
-}
 
 //declare the global variables 
 int builtin;
@@ -28,7 +19,6 @@ YY_BUFFER_STATE buffer;
 
 int main(void) 
 {
-
 	/*
 		char string[] = "\"sdfa\"\n String";
 	    YY_BUFFER_STATE buffer = yy_scan_string(string);
@@ -38,12 +28,7 @@ int main(void)
     */
 
 
-
-	//For handling Ctrl + C
-	signal(SIGINT, SIG_IGN);
-	signal(SIGINT, signalHandling);
-	//May need to use sigaction instead later.
-
+	
 	shell_init();
 	while(1){
 		printPrompt();
@@ -132,20 +117,10 @@ void recover_from_errors()
 	// To do this: use yylex() directly.
 	printf("recover_from_errors\n");
 	yy_delete_buffer(buffer);	
-	printf("delete buffer\n");
-		if(builtin == 0 )
-		{
-			builtin = 1;
-			printf("I have idea?\n");
-			//yylex();
-			yyrestart(stdin);
-			
-		}
-		else
-		{
-			printf("I have no idea\n");
-		}
-
+	//printf("delete buffer\n");
+		
+	printf("I have idea?\n");
+	yyrestart(stdin);					//restart to stdin !!!
 	//yy_delete_buffer();
 	//yylex();
 	//exit(1);

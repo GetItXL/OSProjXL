@@ -36,7 +36,7 @@ typedef struct com {
 
 /* alias structure */
 struct alias {
-	int used;			//used = 1; new = 0
+	//int used;			//used = 1; new = 0 for another name of the alias reference to this alias 
 	int refalias;		// 0 refer to a string, 1 refer to an alias
 	char *alname;
 	char *alstr;
@@ -66,13 +66,14 @@ int Executable();
 //------- function for alias -----------
 
 int checkExistAlias(char*);			// -1 does not exist, else return index position;
-int checkAliasLoop();				//0 is loop, 1 is not loop;
+int checkAliasLoop(char*, int);				//0 is loop, 1 is not loop;
 void addAlias(char*, char*, int);	
 void deleteAlias(char*);
 void showAlias();					//display all alias in tab
 char* noquoto(char*);
 void processAlias(char*);			//check if input is an alias
 int alias_input(char*);
+int helper(char*, int, int);
 
 // -------------------------------------
 
