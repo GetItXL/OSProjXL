@@ -28,7 +28,7 @@ int yydebug;
 /* default yylval type is int (num) */
 %token <num> BYE SETENV PRINTENV CD UNSETENV ALIAS UNALIAS EOL READFILE OUTFILE PIPE BACKGROUND DOL LBRAC RBRAC
 %token <string> WORD METACHAR STRING
-%type <string> cmd_name
+%type <string> cmd_name other_cmd pipe_cmd
 
 
 
@@ -37,7 +37,7 @@ int yydebug;
 	cmd 		
 			:	builtin_cmd				{	;}
 			|	alias_cmd				{	;}
-			|	other_cmd				{	;}
+			|	pipe_cmd				{	;}
 			;
 
 	builtin_cmd		
@@ -154,72 +154,124 @@ int yydebug;
 
 			;
 	
+	pipe_cmd:	
+				other_cmd EOL
+				{
+					builtin = 0;
+					unknowStr = $1;
+					printf(" pipline with 1 command\n");
+					YYACCEPT;
+				}
+			|	other_cmd 
+				{
+					builtin = 0;
+					unknowStr = $1;
+					printf(" pipline with 1 command no eol\n");
+					YYACCEPT;
+				}
+			|	other_cmd PIPE other_cmd
+				{
+					builtin = 0;
+					unknowStr = $1;
+					//numbCmd++;
+					printf(" pipline with 2 command no eol\n");
+					YYACCEPT;
+				}
+			// this won't work, need help with the repeatable pipe
+			|	pipe_cmd PIPE other_cmd
+				{
+					builtin = 0;
+					unknowStr = $1;
+					printf(" pipline with more commands no eol\n");
+					YYACCEPT;
+				}
+			;
 
 	other_cmd
-			:	cmd_name	//For cmd without any arg
+			:	
+				cmd_name					//For cmd without any arg
 				{
 					builtin = 0;
-					comtab[currcmd].comName = $1;
-					comtab[currcmd].countArgs = 0;
-					//comtab[currcmd].atptr = Allocate(ARGTAB);
-
+					comtab[numbCmd].comName = $1;
+					comtab[numbCmd].countArgs = 0;
+					//comtab[numbCmd].atptr = Allocate(ARGTAB);
+					numbCmd++;
 					unknowStr = $1;
 					printf("nonbuiltin without arg\n");
-					YYACCEPT;
+					//YYACCEPT;
 
 				}
-			|	cmd_name arguments	//with arguments
+			|	cmd_name arguments			//with arguments
 				{
 					builtin = 0;
-					comtab[currcmd].comName = $1;
-					//comtab[currcmd].countArgs = 0;
-					//comtab[currcmd].atptr = Allocate(ARGTAB);
-
+					comtab[numbCmd].comName = $1;
+					//comtab[numbCmd].countArgs = 0;
+					//comtab[numbCmd].atptr = Allocate(ARGTAB);
+					numbCmd++;
 					unknowStr = $1;
-					printf("nonbuiltin without arg\n");
-					YYACCEPT;
-				}
+					printf("nonbuiltin with arg\n");
+					//YYACCEPT;
+				}	
 			;
 
 
 
 	//Added the string case in only for the unknownStr, maybe don't need it??
-	cmd_name : 	WORD 	{$$ = $1;}
-			 |	STRING 	{$$ = $1;}
+	cmd_name : 	WORD 	
+				{
+					$$ = $1; 
+					printf("name  lala, %d\n",numbCmd);
+
+				}
+			 ;
 
 
 	//Arguments can be one or more WORD/STRING
 	arguments
-			:	WORD 				
+			:	READFILE
 				{
 					currarg = 1; //first element in arg[] is the cmd 
-					comtab[currcmd].args[currarg] = $1;
+					comtab[numbCmd].args[currarg] = $1;
 					currarg++;
-					comtab[currcmd].countArgs++;
+					comtab[numbCmd].countArgs++;
+				}
+			|	OUTFILE
+				{
+					currarg = 1; //first element in arg[] is the cmd 
+					comtab[numbCmd].args[currarg] = $1;
+					currarg++;
+					comtab[numbCmd].countArgs++;
+				}
+			|	WORD 				
+				{
+					currarg = 1; //first element in arg[] is the cmd 
+					comtab[numbCmd].args[currarg] = $1;
+					currarg++;
+					comtab[numbCmd].countArgs++;
+					printf("arge  lala\n");
 
 				}
 			|	STRING 				
 				{
 					currarg = 1; //first element in arg[] is the cmd 
-					comtab[currcmd].args[currarg] = $1;
+					comtab[numbCmd].args[currarg] = $1;
 					currarg++;
-					comtab[currcmd].countArgs++;
+					comtab[numbCmd].countArgs++;
 				}
 			|	arguments WORD
 				{
-					comtab[currcmd].args[currarg] = $2;
+					comtab[numbCmd].args[currarg] = $2;
 					currarg++;
-					comtab[currcmd].countArgs++;
+					comtab[numbCmd].countArgs++;
 				}
 
 			|	arguments STRING
 				{
-					comtab[currcmd].args[currarg] = $2;
+					comtab[numbCmd].args[currarg] = $2;
 					currarg++;
-					comtab[currcmd].countArgs++;
+					comtab[numbCmd].countArgs++;
 				}
 			;
-
 %%	
 
 /*

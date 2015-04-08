@@ -5,6 +5,7 @@
 #include "alias.c"
 //#include <stdlib.h>
 //#include "y.tab.h"
+#include <sys/types.h>
 #include <signal.h>
 
 //---------------- This is for handling Ctrl+C -------
@@ -24,11 +25,16 @@ int bicmd;
 char *bistr;
 char *bistr2;
 int alProce;	
+int     fd[2];
+int *pipe_arr[10];
+char    readbuffer[80];
 
 //---- test ---
 COMMAND comtab[MAXCMD];
 int currcmd;
 int currarg;
+int numbCmd;
+pid_t pid[MAXCMD]; 
 
 int CMD;
 YY_BUFFER_STATE buffer;
@@ -59,8 +65,6 @@ int main(void)
 			printPrompt();
 		}	
 		
-		//printPrompt();
-
 		CMD = getCommand();
 		//yy_delete_buffer(buffer);	
 		switch(CMD)		//check if its a excutible command that follows all the rules.
@@ -90,6 +94,7 @@ void shell_init()
 	inputd = 0;
 	outputd = 0;
 	alProce = 0; 			// does not process alias;
+	numbCmd = 0;			//
 	//aliastab[MAX] = {0};
 	// init all variables.
 	// define (allocate storage) for some var/tables 
@@ -112,12 +117,10 @@ int getCommand()
 	if (yyparse())	
 	{
 		return (understand_errors());
-		//return (ERROR);
 	}
 	else
-	{
 		return (OK);		//The value returned by yyparse is 0 if parsing was successfu					
-	}	
+		
 }
 
 void init_scanner_and_parser(){
@@ -131,6 +134,8 @@ void init_scanner_and_parser(){
 	alORstr = 0;				//return 1 is alias, 0 is string
 	inputd = 0;
 	outputd = 0;
+	numbCmd = 0;
+	currcmd = 0; 				//not sure this.
 
 	/** Avoid using nested for loop??
 	  * may change comtab to be a pointer (COMMAND *comtab[]) instead
@@ -139,14 +144,14 @@ void init_scanner_and_parser(){
 	// If use sizeof(array), then bus error
 	int i, j;
 	for(i = 0; i < MAXCMD; i++){
-		comtab[i].comName = NULL;
-		comtab[i].countArgs = 0;
-		comtab[i].infd = 0;
-		comtab[i].outfd = 0;
 		//for(j = 0; j < sizeof(comtab[i].args); j++){
 		for(j = 0; j < MAXARGS; j++){
 			comtab[i].args[j] = NULL;
 		}
+		comtab[i].comName = NULL;
+		comtab[i].countArgs = 0;
+		comtab[i].infd = (STD);
+		comtab[i].outfd = (STD);
 	}
 
 	//This will work in here for now. 
@@ -195,10 +200,7 @@ void processCommand()
 	if(builtin)
 		do_it();
 	else
-	{
-		execute_it();
-	}
-	
+	{		execute_it();	}
 	//yy_delete_buffer(buffer);	
 }
 
@@ -237,8 +239,6 @@ void do_it(){
 			break;
 		default:	
 			printf("unexpected error!");
-				//exit(1);
-
 	}
 	if(alProce==1)
 		alProce=0;
@@ -271,6 +271,10 @@ void printEnv(){
 void execute_it()
 {
 
+	// need to find the way
+//	pid[0] = fork(); //create a child process
+//	int     fd[2];
+   	char    readbuffer[80];
 	//Need to put this in a proper place
 	comtab[currcmd].args[0] = comtab[currcmd].comName;
 
@@ -279,70 +283,7 @@ void execute_it()
 	// Handle  command execution, pipelining, i/o redirection, and background processing. 
 	// Utilize a command table whose components are plugged in during parsing by yacc. 
 
-/* 
-	 * Check Command Accessability and Executability
-	*/
-	if(executable() == (ERROR)) {  
-		//use access() system call with X_OK
-		printf("Command not Found!\n");
-		return;
-	}
-	else
-	{
-		printf("Command! Found!\n");
-		if(builtin == 1)					//asume it can only be alias
-		{
-			processAlias(unknowStr);			// find the right command
-			alProce = 1;						// now is processing on alias
-			if(!alORstr)							// if alias is a string
-			{
-				char *temp = noquoto(aliastr);
-				printf("is string %s\n",temp );
-				buffer = yy_scan_string(temp);
-			}
-			else
-			{
-				printf("is alias %s\n",aliastr );
-				buffer = yy_scan_string(aliastr);
-			}
-		}
-		else
-		{
-			pid_t pid;
-			int status;
-			pid = fork(); //create a child process
 
-			if(pid){ //If it's the parent process
-				printf("I'm waiting on the child process\n");
-				pid = wait(&status);
-				printf("child process %d finished\n", pid);
-			}
-			else{	//if it's the child process, execute cmd
-
-				//Debug
-				int i;
-				for(i = 0; i < sizeof(comtab[currcmd].args); i++){
-					if(comtab[currcmd].args[i] != NULL)
-						printf(" %s", comtab[currcmd].args[i]);
-				}
-				printf("\n");
-
-
-				//Searches for the cmd automatically
-				execvp(comtab[currcmd].comName, comtab[currcmd].args);
-			}
-
-		}
-		/** Modified by Lulu
-		  * commented this out to test ls
-		else
-		{
-			printf("error!\n");
-			return;
-		}
-			printf("after excute_int\n");
-		*/
-	}
 	/*
 	 * Check io file existence in case of io-redirection.
 	*/
@@ -362,7 +303,7 @@ void execute_it()
 	pid_t pid;
 	int status;
 	pid = fork(); //create a child process
-
+	printf("I'm  on %d\n", pid);
 	if(pid){ //If it's the parent process
 		printf("I'm waiting on the child process\n");
 		pid = wait(&status);
@@ -382,11 +323,43 @@ void execute_it()
 		//Searches for the cmd automatically
 		execvp(comtab[currcmd].comName, comtab[currcmd].args);
 	}
-
-
 */
 	//Build up the pipeline (create and set up pipe end points (using pipe, dup) 
 	//Process background
+
+	// pipeline implementation
+
+	int status;
+	//numbCmd++;
+
+	pipe(fd);
+
+	// need to keep pipeing, not executing.
+	
+	// pid = fork(); //create a child process
+
+	printf("current cmd is %d, and numbCmd is %d \n",currcmd, numbCmd);
+	for(int i = 0; i < numbCmd; i++)		//for each cmd;
+	{
+		
+		//pipe(pipe_arr[i]);
+		pid[i] = fork();
+		
+		printf("in the loop \n");
+		
+
+		printf("I'm  on %d\n", pid);
+		switch(pid[i])
+		{
+			case 0:		commandPosition(i);
+						break;
+			default:	printf("I'm waiting on the child process\n");
+						pid[i] = wait(&status);
+						printf("child process %d finished\n", pid[0]);
+						break;
+		}
+
+	}	
 }
 
 int executable()
@@ -401,20 +374,138 @@ int executable()
 	}
 	else								// check whether it's a system call
 	{
-		//if(access(comtab[currcmd].comName, X_OK) == 0){ //0 is returned on success, and -1 is returned on failure
-			//If cmd exists and we can access it
-
-			return (OK);
-		//} 
-
-		//Can I use this?? Or do I have to use access()?
-		//if(execvp(comtab[currcmd].comName, comtab[currcmd].args) != -1){
-		//	return 1; //If the cmd can be found
-		//}
+		return (OK);
 	}
 				
 	return 0;
 } 
+
+void commandPosition(int cmd)
+{
+	// the pipeline here does not have logic, need fix issue.
+	switch(whichCmd(cmd))
+	{
+		case FIRST:		printf("first command\n");
+	//	If the parent wants to send data to the child, it should close fd0, and the child should close fd1.
+						if(close(fd[0])==ERROR){}		//output 1, input 0
+						if(dup2(fd[1],STDOUT_FILENO)!=1){}
+
+						if(close(fd[1])==ERROR){}
+						break;
+
+		case LAST:		printf("last command\n");
+	//	If the parent wants to receive data from the child, it should close fd1, and the child should close fd0. 
+						if(close(fd[1])==ERROR){}
+						if(dup2(fd[0],STDIN_FILENO)==ERROR){}
+						
+						if(close(fd[0])==ERROR){}
+						break;
+
+		case ONLY_ONE:	printf("only one command\n");
+						in_redir();
+						out_redir();
+						//execvp(comtab[cmd].comName, comtab[cmd].args);
+						
+
+						break;
+		default:		printf("middle command\n");
+						if(dup2(fd[1],STDIN_FILENO)==ERROR){}
+						if(dup2(fd[0],STDOUT_FILENO)==ERROR){}
+
+						if(close(fd[0])==ERROR){}
+						if(close(fd[1])==ERROR){}
+
+						break;
+	}
+	printf("finished commandPosition\n");
+			/* 
+	 * Check Command Accessability and Executability
+	*/
+	if(executable() == (ERROR)) {  
+		//use access() system call with X_OK
+		printf("Command not Found!\n");
+		return;
+	}
+	else
+	{
+		doCMD(cmd);
+	}
+	//numbCmd = 0;		//after the pipe, reset to 0;
+	
+}
+
+void doCMD(int cmd)
+{
+	printf("Command! Found!\n");
+		if(builtin == 1)					//asume it can only be alias
+		{
+			processAlias(unknowStr);			// find the right command
+			alProce = 1;						// now is processing on alias
+			if(!alORstr)							// if alias is a string
+			{
+				char *temp = noquoto(aliastr);
+				printf("is string %s\n",temp );
+				buffer = yy_scan_string(temp);
+			}
+			else
+			{
+				printf("is alias %s\n",aliastr );
+				buffer = yy_scan_string(aliastr);
+			}
+			return;
+		}
+		else
+		{
+			//printf("that is not alias\n");
+			printf("print name is %s, and cmd is %d\n",comtab[cmd].comName,cmd);
+			execvp(comtab[cmd].comName, comtab[cmd].args);
+			exit(0);
+		}
+}
+
+int whichCmd(cmd)
+{
+	if(cmd == 0 && numbCmd == 1)
+		return ONLY_ONE;
+	else if(cmd == 0 && numbCmd != 1)
+		return FIRST;
+	else if(cmd == numbCmd-1)
+		return LAST;
+	else
+		return -1;
+}
+
+void in_redir()
+{
+	if(comtab[currcmd].infd == STD)
+	{
+		printf("read from stdin\n");
+	}	
+	else if(comtab[currcmd].infd == FILE)
+	{
+		printf("read from file\n");
+	}
+	else			
+	{
+		printf("read from str\n");
+	}
+}
+						
+void out_redir()
+{
+	if(comtab[currcmd].outfd == STD)
+	{
+		printf("out to stdin\n");
+	}	
+	else if(comtab[currcmd].outfd == FILE)
+	{
+		printf("out to file\n");
+	}
+	else			
+	{
+		printf("out to str\n");
+	}
+}
 
 int check_in_file()
 {

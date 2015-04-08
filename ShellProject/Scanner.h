@@ -17,6 +17,14 @@
 
 #define ALIASADD 		352
 #define ALIASADDSTR 	353	
+
+#define FIRST			1
+#define LAST			2
+#define ONLY_ONE		3
+
+#define STD 			0
+#define FILE 			1
+#define STR 			2
 //#define LOGOUT 352
 //You can either define it here or include "y.tab.h" which has the BYE definition already
 
@@ -32,8 +40,8 @@ typedef struct com {
 	int countArgs;				//count of its arguments
 	//ARGTAB *atptr;				//pointer to a list of null terminated arguments
 	char *args[MAXARGS];
-	int infd;					//intput file name
-	int outfd;					//output file name
+	int infd;					//intput file directory
+	int outfd;					//output file directory
 } COMMAND;
 
 
@@ -71,7 +79,14 @@ int check_out_file();
 
 char* noquoto(char*);				// no quoto
 int executable();
+void doCMD(int);
 
+// ------------------ pipeline functions ------------
+
+void commandPosition(int cmd);				//for pipeline
+int whichCmd(int cmd);
+void in_redir();
+void out_redir();
 
 //------- function for alias -----------
 
@@ -96,10 +111,16 @@ extern int builtin;
 extern int bicmd;
 extern char *bistr;
 extern char *bistr2;
-extern int currcmd;
+
+// ---------------- for pipline ---------------
+
+extern int currcmd;					//current cmd index position in the comtab;
 extern int currarg;
+extern int numbCmd;					//to record how many number of cmd at once.
+
 
 // --------- global variables for alias ------------
+
 extern struct alias aliastab[MAX];	// table to store alias 
 extern int alORstr;					//return 1 is alias, 0 is string
 extern int aliasNumb;				// count number of alias in tab
@@ -113,6 +134,7 @@ extern int inputd;					// 0 stdin, 1 string, 2 files
 extern int outputd;					// 0 stdout, 1 string, 2 files
 extern char *unknowStr;
 extern void yyerror(char *);
+
 // ------------- read string as command ----------
 
 typedef struct yy_buffer_state * YY_BUFFER_STATE;
