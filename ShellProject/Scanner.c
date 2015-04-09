@@ -60,13 +60,14 @@ int main(void)
 	while(1){
 
 		//printf("alProce is %d\n", alProce);
-		if(!alProce)
-		{
+		 if(!alProce)
+		 {
 			printPrompt();
-		}	
+		 }	
 		
+		//printPrompt();
 		CMD = getCommand();
-		//yy_delete_buffer(buffer);	
+		yy_delete_buffer(buffer);	
 		switch(CMD)		//check if its a excutible command that follows all the rules.
 		{
 			case ERROR: 	recover_from_errors();
@@ -95,15 +96,6 @@ void shell_init()
 	outputd = 0;
 	alProce = 0; 			// does not process alias;
 	numbCmd = 0;			//
-	//aliastab[MAX] = {0};
-	// init all variables.
-	// define (allocate storage) for some var/tables 
-	//init all tables (e.g., alias table)
-	//get PATH environment variable (use getenv()) 
-	//get HOME env variable (also use getenv()) 
-	//disable anything that can kill your shell.
-	// (the shell should never die; only can be exit) 
-	// do anything you feel should be done as init
 }
 
 void printPrompt(){	 printf("%s :> ",getcwd(NULL, 0));}
@@ -170,12 +162,12 @@ void recover_from_errors()
 	// the rest of the command.
 	// To do this: use yylex() directly.
 	printf("recover_from_errors\n");
-	yy_delete_buffer(buffer);	
+	//yy_delete_buffer(buffer);	
 	//printf("delete buffer\n");
-	char* temp = "nothing here";
-	yyerror(temp);
+
 	printf("I have idea?\n");
 	yyrestart(stdin);					//restart to stdin !!!
+	//this may create a child process, cannot bye
 
 	//yy_delete_buffer();
 	//yylex();
@@ -207,12 +199,13 @@ void processCommand()
 
 
 void do_it(){
+	printf("-builtin----here\n");
 	switch(bicmd){
 		case CDX :
 			changedir(bistr);
 			break;
 		case CDHOME :
-			gohome();
+			gohome();printf("-----here\n");
 			break;
 		case PRINTENV :
 			printEnv();
@@ -299,31 +292,7 @@ void execute_it()
 	/** Only tested with ls (no arg).
 	  * Need to add pipeline, background, io redirection
 	  * Need to modify parser to allow multiple args */
-/*
-	pid_t pid;
-	int status;
-	pid = fork(); //create a child process
-	printf("I'm  on %d\n", pid);
-	if(pid){ //If it's the parent process
-		printf("I'm waiting on the child process\n");
-		pid = wait(&status);
-		printf("child process %d finished\n", pid);
-	}
-	else{	//if it's the child process, execute cmd
 
-		//Debug
-		int i;
-		for(i = 0; i < sizeof(comtab[currcmd].args); i++){
-			if(comtab[currcmd].args[i] != NULL)
-				printf(" %s", comtab[currcmd].args[i]);
-		}
-		printf("\n");
-
-
-		//Searches for the cmd automatically
-		execvp(comtab[currcmd].comName, comtab[currcmd].args);
-	}
-*/
 	//Build up the pipeline (create and set up pipe end points (using pipe, dup) 
 	//Process background
 
@@ -355,7 +324,7 @@ void execute_it()
 						break;
 			default:	printf("I'm waiting on the child process\n");
 						pid[i] = wait(&status);
-						printf("child process %d finished\n", pid[0]);
+						printf("child process %d finished\n", pid[i]);
 						break;
 		}
 
@@ -404,6 +373,8 @@ void commandPosition(int cmd)
 		case ONLY_ONE:	printf("only one command\n");
 						in_redir();
 						out_redir();
+						close(fd[1]);
+						close(fd[0]);
 						//execvp(comtab[cmd].comName, comtab[cmd].args);
 						
 

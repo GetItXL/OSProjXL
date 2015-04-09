@@ -53,6 +53,12 @@ int yydebug;
 					printf("PRINTENV\n");
 					YYACCEPT; 
 				}
+			| 	PRINTENV 			
+				{ 	bicmd = PRINTENV;
+					builtin = 1;
+					printf("PRINTENV no eol\n");
+					YYACCEPT; 
+				}
 			|	SETENV WORD WORD EOL	
 				{
 					bicmd = SETENV;
@@ -62,12 +68,29 @@ int yydebug;
 					printf("SETENV\n");
 					YYACCEPT;
 				}	
+			|	SETENV WORD WORD 	
+				{
+					bicmd = SETENV;
+					builtin = 1;
+					bistr = $2;
+					bistr2 = $3;
+					printf("SETENV no eol\n");
+					YYACCEPT;
+				}	
 			|	UNSETENV WORD EOL
 				{
 					bicmd = UNSETENV;
 					builtin = 1;
 					bistr = $2;
 					printf("UNSETENV\n");
+					YYACCEPT;
+				}
+			|	UNSETENV WORD 
+				{
+					bicmd = UNSETENV;
+					builtin = 1;
+					bistr = $2;
+					printf("UNSETENV no eol\n");
 					YYACCEPT;
 				}
 			|	CD EOL					
@@ -125,6 +148,13 @@ int yydebug;
 					printf("ALIAS no para\n");
 					YYACCEPT;
 				}
+			|	ALIAS 				
+				{ 	
+					bicmd = ALIAS;
+					builtin = 1;
+					printf("ALIAS no para\n");
+					YYACCEPT;
+				}
 			|	ALIAS WORD STRING EOL
 				{
 					bicmd = ALIASADDSTR;
@@ -132,6 +162,15 @@ int yydebug;
 					aliasname = $2;
 					aliastr = $3;
 					printf("ALIASADDSTR %s\n",$3);
+					YYACCEPT;
+				}
+			|	ALIAS WORD STRING 
+				{
+					bicmd = ALIASADDSTR;
+					builtin = 1;
+					aliasname = $2;
+					aliastr = $3;
+					printf("ALIASADDSTR %s\n no eol",$3);
 					YYACCEPT;
 				}
 			|	ALIAS WORD WORD EOL			// alias to another alias
@@ -143,12 +182,29 @@ int yydebug;
 					printf("ALIASADDWORD %s\n",$3);
 					YYACCEPT;
 				}
+			|	ALIAS WORD WORD 			// alias to another alias
+				{
+					bicmd = ALIASADD;
+					builtin = 1;
+					aliasname = $2;
+					aliastr = $3;
+					printf("ALIASADDWORD %s\n no eol",$3);
+					YYACCEPT;
+				}
 			|	UNALIAS WORD EOL
 				{
 					bicmd = UNALIAS;
 					builtin = 1;
 					aliasname = $2;
 					printf("UNALIAS no para\n");
+					YYACCEPT;
+				}
+			|	UNALIAS WORD 
+				{
+					bicmd = UNALIAS;
+					builtin = 1;
+					aliasname = $2;
+					printf("UNALIAS no para no eol\n");
 					YYACCEPT;
 				}
 
@@ -158,6 +214,7 @@ int yydebug;
 				other_cmd EOL
 				{
 					builtin = 0;
+					//maybe check here if there is a builin command?
 					unknowStr = $1;
 					printf(" pipline with 1 command\n");
 					YYACCEPT;
@@ -296,7 +353,6 @@ char* noquoto(char* s)
 
 void yyerror (char *s) 
 {
-	printf("lalal___\n");
 	fprintf(stderr, "line %d: %s\n", yylineno, s);
 } 
 
