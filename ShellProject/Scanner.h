@@ -22,9 +22,12 @@
 #define LAST			2
 #define ONLY_ONE		3
 
+// -------- for I/O implimentation ------
+
 #define STD 			0
-#define FILE 			1
-#define STR 			2
+#define STR 			1
+#define FILE 			2
+
 //#define LOGOUT 352
 //You can either define it here or include "y.tab.h" which has the BYE definition already
 

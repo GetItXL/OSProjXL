@@ -25,9 +25,9 @@ int bicmd;
 char *bistr;
 char *bistr2;
 int alProce;	
-int     fd[2];
+int   fd[2]; 			// anything written to fd[1] can be read from fd[0]
 int *pipe_arr[10];
-char    readbuffer[80];
+char   readbuffer[80];
 
 //---- test ---
 COMMAND comtab[MAXCMD];
@@ -166,7 +166,7 @@ void recover_from_errors()
 	//printf("delete buffer\n");
 
 	printf("I have idea?\n");
-	yyrestart(stdin);					//restart to stdin !!!
+	//yyrestart(stdin);					//restart to stdin !!!
 	//this may create a child process, cannot bye
 
 	//yy_delete_buffer();
@@ -267,10 +267,10 @@ void execute_it()
 	// need to find the way
 //	pid[0] = fork(); //create a child process
 //	int     fd[2];
-   	char    readbuffer[80];
+   
 	//Need to put this in a proper place
-	comtab[currcmd].args[0] = comtab[currcmd].comName;
-
+//	comtab[currcmd].args[0] = comtab[currcmd].comName;
+//	printf("...currcmd is %d.set my args[]table, current tabke name is %s \n",currcmd, comtab[currcmd].comName);
 	if(alProce==1)			// extra command
 		alProce=0;
 	// Handle  command execution, pipelining, i/o redirection, and background processing. 
@@ -300,34 +300,44 @@ void execute_it()
 
 	int status;
 	//numbCmd++;
-
-	pipe(fd);
-
-	// need to keep pipeing, not executing.
 	
-	// pid = fork(); //create a child process
+	status = pipe(fd);
+	
+	if(status == -1)
+	{
+		printf("......pipeing error!!\n");
+	}
+
 
 	printf("current cmd is %d, and numbCmd is %d \n",currcmd, numbCmd);
-	for(int i = 0; i < numbCmd; i++)		//for each cmd;
+	//for(int i = 0; i < numbCmd; i++)		//for each cmd;
+
+	for(currcmd; currcmd < numbCmd; currcmd++)
 	{
 		
-		//pipe(pipe_arr[i]);
-		pid[i] = fork();
+		comtab[currcmd].args[0] = comtab[currcmd].comName;
 		
-		printf("in the loop \n");
-		
+		printf("...currcmd is %d.set my args[]table, current tabke name is %s \n",currcmd, comtab[currcmd].comName);
 
-		printf("I'm  on %d\n", pid);
-		switch(pid[i])
+		pid[currcmd] = fork();
+
+		printf("I'm  on fork # %d\n", pid[currcmd]);
+		switch(pid[currcmd])
 		{
-			case 0:		commandPosition(i);
+			case -1:	printf("....fork error!\n");
+						//break;
+						exit(1);
+			case 0:		//commandPosition(i);
+						commandPosition(currcmd);
+						//break;
+						exit(0);
 						break;
-			default:	printf("I'm waiting on the child process\n");
-						pid[i] = wait(&status);
-						printf("child process %d finished\n", pid[i]);
+			default:	
+						while((pid[currcmd] = wait(&status)) != -1)
+							fprintf(stderr, "process %d exits with %d\n", pid[currcmd], WEXITSTATUS(status));
 						break;
 		}
-
+		//exit(0);
 	}	
 }
 
@@ -356,29 +366,37 @@ void commandPosition(int cmd)
 	{
 		case FIRST:		printf("first command\n");
 	//	If the parent wants to send data to the child, it should close fd0, and the child should close fd1.
-						if(close(fd[0])==ERROR){}		//output 1, input 0
-						if(dup2(fd[1],STDOUT_FILENO)!=1){}
+						// written to fd[1], read from fd[0];
 
-						if(close(fd[1])==ERROR){}
+						if(dup2(fd[1],STDOUT_FILENO)!=1){	printf("error line 2\n");}
+						if(close(fd[0])==ERROR){ printf("error line 1\n");}		//output 1, input 0
+						
+						in_redir();
+
 						break;
 
 		case LAST:		printf("last command\n");
 	//	If the parent wants to receive data from the child, it should close fd1, and the child should close fd0. 
-						if(close(fd[1])==ERROR){}
-						if(dup2(fd[0],STDIN_FILENO)==ERROR){}
 						
-						if(close(fd[0])==ERROR){}
+						if(dup2(fd[0],STDIN_FILENO)==ERROR){}	
+						if(close(fd[1])==ERROR){printf("error line 2\n");}
+					
+						 printf("i should outfd to \n");
+						 printf("arg[0] is %s\n", comtab[cmd].args[0]);
+						
+						out_redir();
 						break;
 
 		case ONLY_ONE:	printf("only one command\n");
 						in_redir();
 						out_redir();
-						close(fd[1]);
-						close(fd[0]);
+						 printf("arg[0] is %s\n", comtab[cmd].args[0]);
+						
 						//execvp(comtab[cmd].comName, comtab[cmd].args);
 						
 
 						break;
+
 		default:		printf("middle command\n");
 						if(dup2(fd[1],STDIN_FILENO)==ERROR){}
 						if(dup2(fd[0],STDOUT_FILENO)==ERROR){}
@@ -386,9 +404,8 @@ void commandPosition(int cmd)
 						if(close(fd[0])==ERROR){}
 						if(close(fd[1])==ERROR){}
 
-						break;
 	}
-	printf("finished commandPosition\n");
+	//printf("finished commandPosition: %d\n", cmd);
 			/* 
 	 * Check Command Accessability and Executability
 	*/
@@ -405,9 +422,26 @@ void commandPosition(int cmd)
 	
 }
 
+void in_redir()
+{
+	if(comtab[currcmd].infd == STD)
+	{
+		printf("read from stdin\n");
+
+	}	
+	else if(comtab[currcmd].infd == FILE)
+	{
+		printf("read from file\n");
+	}
+	else			
+	{
+		printf("read from str\n");
+	}
+}
+
 void doCMD(int cmd)
 {
-	printf("Command! Found!\n");
+	//printf("Command! Found! %d \n", cmd);
 		if(builtin == 1)					//asume it can only be alias
 		{
 			processAlias(unknowStr);			// find the right command
@@ -428,8 +462,10 @@ void doCMD(int cmd)
 		else
 		{
 			//printf("that is not alias\n");
-			printf("print name is %s, and cmd is %d\n",comtab[cmd].comName,cmd);
-			execvp(comtab[cmd].comName, comtab[cmd].args);
+		//	printf("print name is %s, and cmd is %d\n",comtab[cmd].comName,cmd);
+			if( execvp(comtab[cmd].comName, comtab[cmd].args) < 0 ){
+				printf("error executing %s\n", comtab[cmd].comName );
+			}
 			exit(0);
 		}
 }
@@ -446,21 +482,7 @@ int whichCmd(cmd)
 		return -1;
 }
 
-void in_redir()
-{
-	if(comtab[currcmd].infd == STD)
-	{
-		printf("read from stdin\n");
-	}	
-	else if(comtab[currcmd].infd == FILE)
-	{
-		printf("read from file\n");
-	}
-	else			
-	{
-		printf("read from str\n");
-	}
-}
+
 						
 void out_redir()
 {
@@ -495,7 +517,8 @@ char* noquoto(char* s)
 	int length = strlen(s);
 	printf("length is %d\n", length);
 
-	for(int i = 0; i < length-2; i++)
+	int i;
+	for( i = 0; i < length-2; i++)
 	{
 		temp[i] = s[i+1];
 		//printf("char %c\n", temp[i-1]);

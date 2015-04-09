@@ -23,7 +23,8 @@ char* cmd;
 
 int checkExistAlias(char* str)
 {
-	for(int i = 0; i < aliasNumb; i++)
+	int i;
+	for( i = 0; i < aliasNumb; i++)
 	{
 		if(strcmp(aliastab[i].alname,str) == 0)
 		{
@@ -40,7 +41,8 @@ int helper(char *str, int refalias, int times)
 
 	if(refalias == 1)											// is an alias
 	{
-		for(int i = 0; i < aliasNumb; i++)
+		int i;
+		for(i = 0; i < aliasNumb; i++)
 		{
 			if(strcmp(aliastab[i].alname,str) == 0)							// this is a loop
 				return ERROR;
@@ -74,7 +76,8 @@ int checkAliasLoop(char *str, int refalias)
 {
 	if(refalias == 1)											// is an alias
 	{
-		for(int i = 0; i < aliasNumb; i++)
+		int i;
+		for(i = 0; i < aliasNumb; i++)
 		{
 			if(strcmp(aliastab[i].alname,str) == 0)				// if my string is your name
 			{													// recursively to check if your string is other's name
@@ -138,9 +141,8 @@ void deleteAlias(char* name)
 	int aliasIndex = checkExistAlias(name);
 	if(aliasIndex != -1)					// alias exist
 	{
-		//aliastab[aliasIndex].alname = '0';
-		//aliastab[aliasIndex].alstr = '0';
-		for(int i = aliasIndex; i < aliasNumb-1; i++ )
+		int i;
+		for(i = aliasIndex; i < aliasNumb-1; i++ )
      	{	aliastab[i] = aliastab[i+1];	}
      	aliasNumb--;
 	}
@@ -155,7 +157,8 @@ void showAlias()
 	else
 	{
 		//printf("aliasNumb is %d\n", aliasNumb);
-		for(int i = 0; i < aliasNumb; i++)
+		int i;
+		for(i = 0; i < aliasNumb; i++)
 		{
 			//printf("alias %s=\"%s\"\n", aliastab[i].alname,aliastab[i].alstr);
 			printf("alias %s=%s\n", aliastab[i].alname,aliastab[i].alstr);
@@ -180,7 +183,7 @@ void processAlias(char* unknowStr)
 		printf("Error! cannot find alias!!!\n");
 		return;
 	}
-	
+	/*
 	while (1) {
 		if (alias_input(cmd) > -1)	
 		{	printf("true!\n");	}// if command has alias, check alias table 				// and expand it
@@ -191,7 +194,7 @@ void processAlias(char* unknowStr)
 		}
 			
 	}
-
+*/
 		// int cmd = checkExistAlias(unknowStr);
 		// //printf("cmd is %d\n",cmd);
 		
