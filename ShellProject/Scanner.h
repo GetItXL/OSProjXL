@@ -6,7 +6,9 @@
 
 #define ERROR 			1
 #define OK				0
+#define SYSTEMERR		-1
 #define ALIASCMD		2
+
 
 #define MAX 			100
 #define MAXARGS			300

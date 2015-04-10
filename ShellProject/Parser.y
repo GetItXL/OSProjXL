@@ -4,20 +4,13 @@
 #include <string.h>
 #include "Scanner.c"
 int yydebug=1; 
-
-
 extern int yylex();
-
 void yyerror (char *s);
 //char* noquote(char *s);
-
 //#define YYDEBUG_LEXER_TEXT yytext
 int yylineno;
 int yydebug;
-
 //currcmd = 0;
-
-
 %}
 
 %union {
@@ -474,27 +467,3 @@ void yyerror (char *s)
 	fprintf(stderr, "line %d: %s\n", yylineno, s);
 } 
 
-
-
-/*
-	words : WORD
-				{
-					$$ = $1;
-				}
-			| words WORD
-				;*/
-
-/*
-	cmd_name
-			:	WORD
-			|	STRING
-			|	ENV
-			;
-	//May need this structure for cmd like this: ${ENV}
-*/
-
-/*
-int main (void) {
-
-	return yyparse ();
-}*/

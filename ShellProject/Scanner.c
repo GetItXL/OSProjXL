@@ -33,7 +33,7 @@ int bioutf = 0;
 char *biOutfile = '\0';
 
 int alProce;	
-int   fd[2],fd_re[2]; 			// anything written to fd[1] can be read from fd[0]
+int   fd[MAXCMD][2]; 			// anything written to fd[1] can be read from fd[0]
 int *pipe_arr[10];
 char   readbuffer[80];
 
@@ -289,14 +289,6 @@ void printEnv(){
 
 void execute_it()
 {
-
-	// need to find the way
-//	pid[0] = fork(); //create a child process
-//	int     fd[2];
-   
-	//Need to put this in a proper place
-//	comtab[currcmd].args[0] = comtab[currcmd].comName;
-//	printf("...currcmd is %d.set my args[]table, current tabke name is %s \n",currcmd, comtab[currcmd].comName);
 	if(alProce==1)			// extra command
 		alProce=0;
 	// Handle  command execution, pipelining, i/o redirection, and background processing. 
@@ -314,10 +306,6 @@ void execute_it()
 		printf("Cann't write to ");
 		return;
 	}
-	
-	/** Only tested with ls (no arg).
-	  * Need to add pipeline, background, io redirection
-	  * Need to modify parser to allow multiple args */
 
 	//Build up the pipeline (create and set up pipe end points (using pipe, dup) 
 	//Process background
@@ -326,19 +314,47 @@ void execute_it()
 
 	int status;
 	//numbCmd++;
+	int numbPip;
+
+	//---------- set up for multiple pipe --------------- 
+	// if(numbCmd == 1 || numbCmd == 2)
+	// {
+	// 	//status = pipe(fd[0]); 
+	// 	//printf("......pipe is repeat\n");
+	// }
+	// else
+	// {	
+		
+	// 	for(numbPip = 0; numbPip < numbCmd-1; numbPip++)
+	// 	{
+	// 		printf("i am pipeing #%d time\n", numbPip);
+	// 		status = pipe(fd[numbPip]);
+	// 		if(status == -1)
+	// 			printf("state error!\n");
+	// 	}
+		
+	// 	status = pipe(fd[0]);
+	// 	status = pipe(fd[1]);
+	// }
+
 	
-	status = pipe(fd);
-		if(status == -1)
-		{
-			printf("state error!\n");
-		}
-	
+		
+	int temp = numbCmd;
 
 	printf("current cmd is %d, and numbCmd is %d \n",currcmd, numbCmd);
 	//for(int i = 0; i < numbCmd; i++)		//for each cmd;
 
 	for(currcmd; currcmd < numbCmd; currcmd++)
 	{
+		if((numbCmd == 1 && currcmd == 0)||(numbCmd == 2 && currcmd == 0))
+		{
+			status = pipe(fd[0]); printf("......pipe is repeat\n");
+		}
+		else if(currcmd < numbCmd-1)
+		{
+			status = pipe(fd[currcmd]);printf("pipe is repeat %d\n", currcmd);
+		}
+
 		comtab[currcmd].args[0] = comtab[currcmd].comName;
 		
 		printf("...currcmd is %d.set my args[]table, current tabke name is %s \n",currcmd, comtab[currcmd].comName);
@@ -351,19 +367,51 @@ void execute_it()
 			case -1:	printf("....fork error!\n");
 						//break;
 						exit(1);
-			case 0:		//commandPosition(i);
-						commandPosition(currcmd);
-						//break;
+			case 0:		commandPosition(currcmd);						//break;
+
 						break;
 			default:	
 						printf("process #%d is on default\n", pid[currcmd]);
+						if(currcmd!= 0 && numbCmd > 2 && currcmd != numbCmd)
+						{
+							printf("close pipe in the parent loop? %d \n", currcmd);
+							if(close(fd[currcmd-1][1]) < 0){printf("error line 2\n");}
+							if(close(fd[currcmd-1][0]) < 0){printf("error ssline 2\n");}
+						}
 						break;
 		}
 	}	
-	close(fd[0]); close(fd[1]); 
-	if(waitpid(pid[numbCmd-1], &status, 0) != pid[numbCmd-1] )
-		fprintf(stderr, "process %d exits with %d\n", pid[currcmd], WEXITSTATUS(status));
-						
+
+/*
+
+waitpid can be either blocking or non-blocking:
+If options is 0, then it is blocking
+If options is WNOHANG, then is it non-blocking
+
+*/
+	if(numbCmd != 1 && numbCmd !=2 )
+	{	printf("---close pipe now!!\n");
+		
+		for(numbPip = 0; numbPip < numbCmd-1; numbPip++)
+		{
+			close(fd[numbPip][0]); close(fd[numbPip][1]); 
+			printf("close pipe #%d\n",numbPip);
+		}	
+		printf("wait for process #%d\n",currcmd);
+
+		//waitpid(pid[0], &status, 0);
+		//printf("wait for process 2 #%d\n",currcmd);
+		if(waitpid(pid[currcmd-1], &status, 0) != pid[currcmd-1] )
+			fprintf(stderr, "process %d exits with %d\n", pid[currcmd-1], WEXITSTATUS(status));
+	  
+	 }
+	 else
+	 {
+	 	close(fd[0][0]); close(fd[0][1]); 
+	 	waitpid(pid[currcmd-1], &status, 0);
+	 }
+	  
+					
 }
 
 int executable()
@@ -393,29 +441,43 @@ void commandPosition(int cmd)
 	//	If the parent wants to send data to the child, it should close fd0, and the child should close fd1.
 						// written to fd[1], read from fd[0];
 
-						if(dup2(fd[1],STDOUT_FILENO)!=1){	printf("error line 2\n");}
-						if(close(fd[0])==ERROR){ printf("error line 1\n");}		//output 1, input 0
+						if(dup2(fd[0][1],STDOUT_FILENO) < 0){		
+							printf("first error line 2\n");}
+						if(close(fd[0][0]) < 0){ 					//closing pipe read
+							printf("first error line 1\n");}		//output 1, input 0
+						if(close(fd[0][1]) < 0){ 					//closing pipe read
+							printf("first error line 1\n");}		//output 1, input 0
 						
-						in_redir();
-
+						//in_redir();
 						break;
 
-		case LAST:		printf("last command\n");
+		case LAST:		printf("last command, and the pipe is #%d\n", currcmd);
 	//	If the parent wants to receive data from the child, it should close fd1, and the child should close fd0. 
-						
-						if(dup2(fd[0],STDIN_FILENO)==ERROR){}	
-						if(close(fd[1])==ERROR){printf("error line 2\n");}
+						if(numbCmd == 1 )
+						{
+							if(dup2(fd[0][0],STDIN_FILENO) < 0){printf("last error line 1\n");	}
+							if(close(fd[0][1]) < 0){printf("last error line 2\n");}
+							if(close(fd[0][0]) < 0){printf("last error line 2\n");}
+						}
+						else
+						{
+							printf("last command, and reading the pipe frpm %d\n", currcmd); 
+							if(dup2(fd[currcmd-1][0],STDIN_FILENO) < 0){ printf("error line \n");}
+							
+							if(close(fd[currcmd-1][1]) < 0){printf("error line 2\n");}
+							if(close(fd[currcmd-1][0]) < 0){printf("error ssline 2\n");}
 					
-						 printf("i should outfd to \n");
+						}
+						
 						 printf("arg[0] is %s\n", comtab[cmd].args[0]);
 						 printf("arg[1] is %s\n", comtab[cmd].args[1]);
-						
-						out_redir();
+			
+					//	exit(0);
 						break;
 
 		case ONLY_ONE:	printf("only one command\n");
-						in_redir();
-						out_redir();
+					//	in_redir();
+					//	out_redir();
 						printf("arg[0] is %s\n", comtab[cmd].args[0]);
 						
 						//execvp(comtab[cmd].comName, comtab[cmd].args);
@@ -423,12 +485,18 @@ void commandPosition(int cmd)
 
 						break;
 
-		default:		printf("middle command\n");
-						if(dup2(fd[1],STDIN_FILENO)==ERROR){}
-						if(dup2(fd[0],STDOUT_FILENO)==ERROR){}
+		default:		printf("middle command, and the pipe is #%d\n", currcmd);
+						// fd[0][0] read			//fd[1][0] write
+						if(dup2(fd[currcmd-1][0],STDIN_FILENO) < 0){printf("midd line 2\n");}
+						if(dup2(fd[currcmd][1],STDOUT_FILENO) < 0){printf("mds line 2\n");}
 
-						if(close(fd[0])==ERROR){}
-						if(close(fd[1])==ERROR){}
+						// curr = 1
+						// close all the pipe
+						if(close(fd[currcmd][0]) < 0){printf("sdfsa line 2\n");}
+						if(close(fd[currcmd-1][1]) < 0){printf("errsdfor line 2\n");}
+						if(close(fd[currcmd][1]) < 0){printf("sdfsa line 2\n");}
+						if(close(fd[currcmd-1][0]) < 0){printf("errsdfor line 2\n");}
+						
 
 	}
 	//printf("finished commandPosition: %d\n", cmd);
