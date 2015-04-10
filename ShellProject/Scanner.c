@@ -153,8 +153,12 @@ void init_scanner_and_parser(){
 		}
 		comtab[i].comName = NULL;
 		comtab[i].countArgs = 0;
-		comtab[i].infd = (STD);
-		comtab[i].outfd = (STD);
+		//comtab[i].infd = (STD);
+		//comtab[i].outfd = (STD);
+		comtab[i].infd = 0;
+		comtab[i].outfd = 0;
+		//comtab[i].infile = NULL;
+		//comtab[i].outfile = NULL;
 	}
 
 	//This will work in here for now. 
@@ -200,13 +204,14 @@ void processCommand()
 	printf("bicmd: %d\n", bicmd);
 	//printf("builtin: %d\n", builtin);
 
-	//Buggy if two cmd trying to write to same file
-	//Need to fix
+
 	if(builtin){
 		int fd, saveSTDOUT;
 		if(bioutf){ //There is redirection
-			fd = creat(biOutfile, 0666); //RW
-			//Maybe use open instead?
+			
+			if((fd = open(biOutfile, O_CREAT | O_TRUNC | O_WRONLY, 0644)) < 0){
+				printf("Oops, fail to open file");
+			}
 			saveSTDOUT = dup(STDOUT); //Save stdout
 			dup2(fd, STDOUT); //copy fd to stdou
 			close(fd); //Release fd (no longer needed sinced copied to stdout)
@@ -214,8 +219,12 @@ void processCommand()
 		}
 		do_it();
 
-		dup2(saveSTDOUT, STDOUT); //redirect output back to STDOUT after finished
-		close(saveSTDOUT);
+		if(bioutf){
+			dup2(saveSTDOUT, STDOUT); //redirect output back to STDOUT after finished
+			//close(fd);
+			close(saveSTDOUT);
+		}
+
 	}
 	else
 	{		execute_it();	}

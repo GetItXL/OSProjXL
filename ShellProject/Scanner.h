@@ -50,8 +50,10 @@ typedef struct com {
 	int countArgs;				//count of its arguments
 	//ARGTAB *atptr;				//pointer to a list of null terminated arguments
 	char *args[MAXARGS];
-	int infd;					//intput file directory
-	int outfd;					//output file directory
+	int infd;					
+	int outfd;	
+	//char *infile;
+	//char *outfile;				
 } COMMAND;
 
 
