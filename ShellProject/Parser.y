@@ -34,7 +34,11 @@ int yydebug;
 
 			|	pipe_cmd GT WORD EOL
 				{
-					//Handle io redirect out
+					//Handle output redirection
+					comtab[numbCmd-1].outfd = 1;
+					comtab[numbCmd-1].outfile = $3;
+
+
 					printf("cmd > %s\n", $3);
 					YYACCEPT;
 					

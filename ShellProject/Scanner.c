@@ -47,6 +47,15 @@ pid_t pid[MAXCMD];
 int CMD;
 YY_BUFFER_STATE buffer;
 
+
+int stdoutFD;
+
+//Don't need to reset them for the next cmd right?
+int newOutfd, newInfd;
+//Used to store fd of in and out file
+
+
+
 int main(void) 
 {
 	/*
@@ -73,7 +82,9 @@ int main(void)
 			printPrompt();
 		 }	
 		
-		//printPrompt();
+		/** To restore output stream to STDOUT after each cmd*/
+		stdoutFD = dup(STDOUT);
+
 		CMD = getCommand();
 		yy_delete_buffer(buffer);	
 		switch(CMD)		//check if its a excutible command that follows all the rules.
@@ -87,6 +98,10 @@ int main(void)
 			default:		printf("Unexpected Error! 0x0\n");
 
 		}
+		/** To restore output stream to STDOUT after each cmd*/
+		dup2(stdoutFD, STDOUT);
+		close(stdoutFD);
+
 	}
 	return 0;
 	
@@ -157,8 +172,8 @@ void init_scanner_and_parser(){
 		//comtab[i].outfd = (STD);
 		comtab[i].infd = 0;
 		comtab[i].outfd = 0;
-		//comtab[i].infile = NULL;
-		//comtab[i].outfile = NULL;
+		comtab[i].infile = NULL;
+		comtab[i].outfile = NULL;
 	}
 
 	//This will work in here for now. 
@@ -219,11 +234,12 @@ void processCommand()
 		}
 		do_it();
 
+		/*
 		if(bioutf){
 			dup2(saveSTDOUT, STDOUT); //redirect output back to STDOUT after finished
 			//close(fd);
 			close(saveSTDOUT);
-		}
+		}*/
 
 	}
 	else
@@ -307,14 +323,18 @@ void execute_it()
 	/*
 	 * Check io file existence in case of io-redirection.
 	*/
+
+
+	//Need these here instead of in the pipe loop so that any file error detected will cause the whole pipe cmd not executing
 	if( check_in_file()==ERROR ) {
 		printf("Cann't read from ");
 		return;
 	}
 	if( check_out_file()==ERROR ) {
-		printf("Cann't write to ");
+		printf("Cann't write to file");
 		return;
 	}
+	/** I did the checking in in_redir() and out_redir() instead */
 
 	//Build up the pipeline (create and set up pipe end points (using pipe, dup) 
 	//Process background
@@ -480,13 +500,15 @@ void commandPosition(int cmd)
 						
 						 printf("arg[0] is %s\n", comtab[cmd].args[0]);
 						 printf("arg[1] is %s\n", comtab[cmd].args[1]);
+
+						 out_redir(cmd);
 			
 					//	exit(0);
 						break;
 
 		case ONLY_ONE:	printf("only one command\n");
-					//	in_redir();
-					//	out_redir();
+						//in_redir();
+						out_redir(cmd);
 						printf("arg[0] is %s\n", comtab[cmd].args[0]);
 						
 						//execvp(comtab[cmd].comName, comtab[cmd].args);
@@ -587,21 +609,26 @@ int whichCmd(cmd)
 }
 
 
-						
-void out_redir()
+//newOutfd is visible to this method, so don't need pass arg					
+void out_redir(cmd)
 {
-	if(comtab[currcmd].outfd == STD)
-	{
-		printf("out to stdin\n");
-	}	
-	else if(comtab[currcmd].outfd == FILE)
-	{
-		printf("out to file\n");
+	//Can also access with comtab[numbCmd-1]
+	if(comtab[cmd].outfd == 1){
+		dup2(newOutfd, STDOUT);
+		close(newOutfd);
 	}
-	else			
-	{
-		printf("out to str\n");
-	}
+	/*
+	//If has output redirection
+	if(comtab[cmd].outfd == 1){
+		int fd, saveSTDOUT;
+		if((fd = open(comtab[cmd].outfile, O_CREAT | O_TRUNC | O_WRONLY, 0644)) < 0){
+			printf("Oops, failed to open file");
+		}
+		//saveSTDOUT = dup(STDOUT); //Save stdout
+		dup2(fd, STDOUT); //copy fd to stdou
+		close(fd); //Release fd (no longer needed sinced copied to stdout)
+		*/
+	
 }
 
 int check_in_file()
@@ -611,6 +638,14 @@ int check_in_file()
 
 int check_out_file()
 {
+	//Only check file existence if there is io redirection
+	//numbCmd -1 = last cmd
+	if(comtab[numbCmd-1].outfd == 1){
+		//Created the outfile here
+		if((newOutfd = open(comtab[numbCmd-1].outfile, O_CREAT | O_TRUNC | O_WRONLY, 0644)) < 0)
+			return ERROR;
+	}
+
 	return 0;
 }
 

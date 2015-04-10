@@ -50,10 +50,10 @@ typedef struct com {
 	int countArgs;				//count of its arguments
 	//ARGTAB *atptr;				//pointer to a list of null terminated arguments
 	char *args[MAXARGS];
-	int infd;					
-	int outfd;	
-	//char *infile;
-	//char *outfile;				
+	int infd;	//Flag. infd = 0 means no in redirection				
+	int outfd;	//Flag. outfd = 0 means no out redirection
+	char *infile;	//Directory for input redirection
+	char *outfile;	//Directory for output redirection
 } COMMAND;
 
 
@@ -97,8 +97,8 @@ void doCMD(int);
 
 void commandPosition(int cmd);				//for pipeline
 int whichCmd(int cmd);
-void in_redir();
-void out_redir();
+void in_redir(int cmd);
+void out_redir(int cmd);
 
 //------- function for alias -----------
 
