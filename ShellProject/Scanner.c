@@ -6,8 +6,11 @@
 //#include <stdlib.h>
 //#include "y.tab.h"
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <signal.h>
 #include <errno.h>
+
 
 //---------------- This is for handling Ctrl+C -------
 typedef void (*sighandler_t)(int);
@@ -25,6 +28,10 @@ int builtin;
 int bicmd;
 char *bistr;
 char *bistr2;
+
+int bioutf = 0;
+char *biOutfile = '\0';
+
 int alProce;	
 int   fd[2],fd_re[2]; 			// anything written to fd[1] can be read from fd[0]
 int *pipe_arr[10];
@@ -130,6 +137,9 @@ void init_scanner_and_parser(){
 	numbCmd = 0;
 	currcmd = 0; 				//not sure this.
 
+	bioutf = 0;
+	biOutfile = '\0';
+
 	/** Avoid using nested for loop??
 	  * may change comtab to be a pointer (COMMAND *comtab[]) instead
 	  */
@@ -190,8 +200,23 @@ void processCommand()
 	printf("bicmd: %d\n", bicmd);
 	//printf("builtin: %d\n", builtin);
 
-	if(builtin)
+	//Buggy if two cmd trying to write to same file
+	//Need to fix
+	if(builtin){
+		int fd, saveSTDOUT;
+		if(bioutf){ //There is redirection
+			fd = creat(biOutfile, 0666); //RW
+			//Maybe use open instead?
+			saveSTDOUT = dup(STDOUT); //Save stdout
+			dup2(fd, STDOUT); //copy fd to stdou
+			close(fd); //Release fd (no longer needed sinced copied to stdout)
+			//redirect to output finished
+		}
 		do_it();
+
+		dup2(saveSTDOUT, STDOUT); //redirect output back to STDOUT after finished
+		close(saveSTDOUT);
+	}
 	else
 	{		execute_it();	}
 	//yy_delete_buffer(buffer);	

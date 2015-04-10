@@ -28,6 +28,11 @@
 #define STR 			1
 #define FILE 			2
 
+
+#define STDIN 			0
+#define STDOUT 			1
+#define STDERR 			2
+
 //#define LOGOUT 352
 //You can either define it here or include "y.tab.h" which has the BYE definition already
 
@@ -114,6 +119,9 @@ extern int builtin;
 extern int bicmd;
 extern char *bistr;
 extern char *bistr2;
+
+extern int bioutf; //0 = no outfile redirection. 1 = has redirection
+extern char *biOutfile;
 
 // ---------------- for pipline ---------------
 
