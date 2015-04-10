@@ -19,20 +19,27 @@ int yydebug;
 }
 
 /* default yylval type is int (num) */
-%token <num> BYE SETENV PRINTENV CD UNSETENV ALIAS UNALIAS GT LT PIPE BACKGROUND DOL LBRAC RBRAC
-%token <string> WORD METACHAR STRING EOL
-%type <string> cmd_name other_cmd pipe_cmd arguments builtin_cmd
+%token <num> BYE SETENV PRINTENV CD UNSETENV ALIAS UNALIAS GT LT PIPE AMP DOL LBRAC RBRAC
+%token <string> WORD METACHAR STRING EOL GTGT TWO AMPONE TILDE
+%type <string> cmd_name other_cmd pipe_cmd arguments builtin_cmd end_char
 
 
 
 %%	
+
+	/*** Problem with TWO **/
+	//TWO is recognized before WORD. Thus if a WORD is 2, then it will be regonized as TWO
 	
 	cmd 		
 			:	
 				pipe_cmd EOL				{	//printf("%s\n", $1); 
 											YYACCEPT;}
+			|	pipe_cmd AMP 				{	printf("&\n"); YYACCEPT;}
+			|	pipe_cmd end_line_option	{	YYACCEPT;}
 
-			|	pipe_cmd GT WORD EOL
+
+			/*
+			pipe_cmd GT WORD EOL
 				{
 					//Handle output redirection
 					comtab[numbCmd-1].outfd = 1;
@@ -63,11 +70,11 @@ int yydebug;
 					//handle background
 					printf("cmd < %s > %s &\n", $3, $5);
 					YYACCEPT;
-				}
+				}*/
 
 
 
-			//Can & appear in the middle of the pipeline?
+			//Can & appear in the middle of the pipeline? NO
 
 
 
@@ -75,6 +82,96 @@ int yydebug;
 			|	alias_cmd				{	;}
 
 			;
+
+
+	end_line_option
+			:	LT WORD end_char
+				{
+					//Handle io redirect in
+					//printf("cmd < %s\n", $3);
+					//YYACCEPT;
+					printf("< infile %s\n", $3);
+
+
+					/**!!!**/
+					//put biinfile = ..;
+					//and comtab[currcmd].infile = ...;
+					//It's ok to put both of them here because system checks if a cmd is built in or not FIRST
+				}
+			|	LT WORD GTGT WORD end_char
+				{
+					//
+					printf("< infile >> errout %s\n", $5);
+				}
+			|	LT WORD GT WORD end_char
+				{
+					//Handle both
+					//printf("cmd < %s > %s\n", $3, $5);
+					//YYACCEPT;
+					printf("< infile > outfile %s\n", $5);
+				}
+			|	LT WORD GT WORD TWO GT WORD end_char
+				{
+					printf("< infile > outfile 2>file %s\n", $8);
+				}
+			|	LT WORD GT WORD TWO GT AMPONE end_char
+				{
+					printf("< infile > outfile 2>&1 %s\n", $8);
+				}
+			|	GT WORD end_char
+				{
+					//Handle output redirection
+					comtab[numbCmd-1].outfd = 1;
+					comtab[numbCmd-1].outfile = $2;
+
+					//For builtin
+					bioutf = 1; //Indicates that there is a outfile redirection
+					biOutfile = $2;
+
+					//printf("cmd > %s\n", $3);
+					//YYACCEPT;		
+					printf("> outfile %s\n", $3);			
+				}
+			|	GT WORD TWO GT WORD end_char
+				{
+					printf("> outfile 2>file %s\n", $6);
+				}
+			|	GT WORD TWO GT AMPONE end_char
+				{
+					printf("> outfile 2>&1 %s\n", $6);
+				}
+			|	GTGT WORD end_char
+				{
+					printf(">> errout %s\n", $3);
+				} 
+				//!!!!!Can you have & after >>?
+			|	TWO GT WORD end_char
+				{
+					printf("2>file %s\n", $4);
+				}
+			|	TWO GT AMPONE end_char
+				{
+					printf("2>&1 %s\n", $4);
+				}
+			;
+
+
+
+	end_char
+			: 	EOL
+				{
+					//
+					//printf("EOL ");
+					$$ = "EOL";
+				}
+			|	AMP
+				{
+					//background flag
+					//printf("& ");
+					$$ = "AMP";
+				}
+			;
+
 
 	builtin_cmd		
 			:	EOL
@@ -92,21 +189,11 @@ int yydebug;
 					YYACCEPT; 
 				}
 
-			|	PRINTENV GT WORD EOL			
-				{ 	
+			|	PRINTENV end_line_option
+				{
 					bicmd = PRINTENV;
 					builtin = 1;
-					bioutf = 1; //Indicates that there is a outfile redirection
-					biOutfile = $3;
-					YYACCEPT; 
-				}
-
-			|	PRINTENV LT WORD EOL			
-				{ 	
-					bicmd = PRINTENV;
-					builtin = 1;
-					//do
-					YYACCEPT; 
+					YYACCEPT;
 				}
 
 			|	SETENV WORD WORD EOL	
@@ -118,26 +205,13 @@ int yydebug;
 					printf("SETENV no eol\n");
 					YYACCEPT;
 				}	
-
-			|	SETENV WORD WORD GT WORD EOL
+		
+			|	SETENV WORD WORD end_line_option
 				{
 					bicmd = SETENV;
 					builtin = 1;
 					bistr = $2;
 					bistr2 = $3;
-
-					bioutf = 1; //Indicates that there is a outfile redirection
-					biOutfile = $5;
-					YYACCEPT;
-				}
-
-			|	SETENV WORD WORD LT WORD EOL
-				{
-					bicmd = SETENV;
-					builtin = 1;
-					bistr = $2;
-					bistr2 = $3;
-
 					YYACCEPT;
 				}
 
@@ -149,27 +223,14 @@ int yydebug;
 					printf("UNSETENV no eol\n");
 					YYACCEPT;
 				}
-			|	UNSETENV WORD GT WORD EOL
+			
+			|	UNSETENV WORD end_line_option
 				{
 					bicmd = UNSETENV;
 					builtin = 1;
 					bistr = $2;
-
-
-					bioutf = 1; //Indicates that there is a outfile redirection
-					biOutfile = $4;
 					YYACCEPT;
-				}	
-
-			|	UNSETENV WORD LT WORD EOL
-				{
-					bicmd = UNSETENV;
-					builtin = 1;
-					bistr = $2;
-
-
-					YYACCEPT;
-				}	
+				}
 
 			|	CD EOL			
 				{ 	
@@ -179,26 +240,31 @@ int yydebug;
 					YYACCEPT; 
 			
 				}
-			|	CD LT WORD EOL			
-				{ 	
+			
+			|	CD end_line_option
+				{
 					bicmd = CDHOME;
 					builtin = 1;
 
 					YYACCEPT; 
-			
-				}	
+				}
 
-			|	CD GT WORD EOL			
+			|	CD TILDE EOL			
 				{ 	
 					bicmd = CDHOME;
 					builtin = 1;
-
-
-					bioutf = 1; //Indicates that there is a outfile redirection
-					biOutfile = $3;					
+					printf("CD tilde\n");
 					YYACCEPT; 
 			
-				}	
+				}
+
+			|	CD TILDE end_line_option
+				{
+					bicmd = CDHOME;
+					builtin = 1;
+
+					YYACCEPT; 
+				}
 
 			|	CD WORD EOL
 				{
@@ -208,7 +274,8 @@ int yydebug;
 					printf("CD para\n");
 					YYACCEPT;
 				}
-			|	CD WORD LT WORD EOL
+
+			|	CD WORD end_line_option
 				{
 					bicmd = CDX;
 					builtin = 1;
@@ -217,16 +284,6 @@ int yydebug;
 					YYACCEPT;
 				}	
 
-			|	CD WORD GT WORD EOL
-				{
-					bicmd = CDX;
-					builtin = 1;
-					bistr = $2;
-					
-					bioutf = 1; //Indicates that there is a outfile redirection
-					biOutfile = $4;					
-					YYACCEPT;
-				}								
 			|	BYE 
 				{
 					bicmd = BYE;
