@@ -7,6 +7,7 @@
 //#include "y.tab.h"
 #include <sys/types.h>
 #include <signal.h>
+#include <errno.h>
 
 //---------------- This is for handling Ctrl+C -------
 typedef void (*sighandler_t)(int);
@@ -25,7 +26,7 @@ int bicmd;
 char *bistr;
 char *bistr2;
 int alProce;	
-int   fd[2]; 			// anything written to fd[1] can be read from fd[0]
+int   fd[2],fd_re[2]; 			// anything written to fd[1] can be read from fd[0]
 int *pipe_arr[10];
 char   readbuffer[80];
 
@@ -302,27 +303,25 @@ void execute_it()
 	//numbCmd++;
 	
 	status = pipe(fd);
+		if(status == -1)
+		{
+			printf("state error!\n");
+		}
 	
-	if(status == -1)
-	{
-		printf("......pipeing error!!\n");
-	}
-
 
 	printf("current cmd is %d, and numbCmd is %d \n",currcmd, numbCmd);
 	//for(int i = 0; i < numbCmd; i++)		//for each cmd;
 
 	for(currcmd; currcmd < numbCmd; currcmd++)
 	{
-		
 		comtab[currcmd].args[0] = comtab[currcmd].comName;
 		
 		printf("...currcmd is %d.set my args[]table, current tabke name is %s \n",currcmd, comtab[currcmd].comName);
 
-		pid[currcmd] = fork();
+		int pidnumb = pid[currcmd] = fork();
 
 		printf("I'm  on fork # %d\n", pid[currcmd]);
-		switch(pid[currcmd])
+		switch(pidnumb)
 		{
 			case -1:	printf("....fork error!\n");
 						//break;
@@ -330,15 +329,16 @@ void execute_it()
 			case 0:		//commandPosition(i);
 						commandPosition(currcmd);
 						//break;
-						exit(0);
 						break;
 			default:	
-						while((pid[currcmd] = wait(&status)) != -1)
-							fprintf(stderr, "process %d exits with %d\n", pid[currcmd], WEXITSTATUS(status));
+						printf("process #%d is on default\n", pid[currcmd]);
 						break;
 		}
-		//exit(0);
 	}	
+	close(fd[0]); close(fd[1]); 
+	if(waitpid(pid[numbCmd-1], &status, 0) != pid[numbCmd-1] )
+		fprintf(stderr, "process %d exits with %d\n", pid[currcmd], WEXITSTATUS(status));
+						
 }
 
 int executable()
@@ -383,6 +383,7 @@ void commandPosition(int cmd)
 					
 						 printf("i should outfd to \n");
 						 printf("arg[0] is %s\n", comtab[cmd].args[0]);
+						 printf("arg[1] is %s\n", comtab[cmd].args[1]);
 						
 						out_redir();
 						break;
@@ -390,7 +391,7 @@ void commandPosition(int cmd)
 		case ONLY_ONE:	printf("only one command\n");
 						in_redir();
 						out_redir();
-						 printf("arg[0] is %s\n", comtab[cmd].args[0]);
+						printf("arg[0] is %s\n", comtab[cmd].args[0]);
 						
 						//execvp(comtab[cmd].comName, comtab[cmd].args);
 						
@@ -451,6 +452,7 @@ void doCMD(int cmd)
 				char *temp = noquoto(aliastr);
 				printf("is string %s\n",temp );
 				buffer = yy_scan_string(temp);
+				free(temp);
 			}
 			else
 			{
@@ -464,7 +466,7 @@ void doCMD(int cmd)
 			//printf("that is not alias\n");
 		//	printf("print name is %s, and cmd is %d\n",comtab[cmd].comName,cmd);
 			if( execvp(comtab[cmd].comName, comtab[cmd].args) < 0 ){
-				printf("error executing %s\n", comtab[cmd].comName );
+				printf("error executing %s, and %s\n", comtab[cmd].comName, strerror(errno));
 			}
 			exit(0);
 		}
@@ -513,7 +515,7 @@ int check_out_file()
 
 char* noquoto(char* s)
 {
-	char temp[100];
+	char* temp = malloc(100);
 	int length = strlen(s);
 	printf("length is %d\n", length);
 
