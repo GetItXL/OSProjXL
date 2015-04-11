@@ -88,15 +88,22 @@ int yydebug;
 			:	LT WORD end_char
 				{
 					//Handle io redirect in
-					//printf("cmd < %s\n", $3);
-					//YYACCEPT;
-					printf("< infile %s\n", $3);
+					
+					//Builtin Cmd
+					biinf = 1;
+					biInfile = $2;
+
+					//nonbuiltin
+					comtab[0].infd = 1;		//input redirect is for the first cmd in the comtab
+					comtab[0].infile = $2;
+					
 
 
 					/**!!!**/
 					//put biinfile = ..;
 					//and comtab[currcmd].infile = ...;
 					//It's ok to put both of them here because system checks if a cmd is built in or not FIRST
+					printf("< infile %s\n", $3);
 				}
 			|	LT WORD GTGT WORD end_char
 				{

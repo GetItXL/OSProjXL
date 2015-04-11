@@ -126,6 +126,8 @@ extern char *bistr2;
 
 extern int bioutf; //0 = no outfile redirection. 1 = has redirection
 extern char *biOutfile;
+extern int biinf;	//0 = no input redirection. 1 = has input redirection
+extern char *biInfile;
 
 // ---------------- for pipline ---------------
 

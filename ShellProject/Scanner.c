@@ -31,6 +31,8 @@ char *bistr2;
 
 int bioutf = 0;
 char *biOutfile = '\0';
+int biinf = 0;
+char *biInfile = '\0';
 
 int alProce;	
 int   fd[MAXCMD][2]; 			// anything written to fd[1] can be read from fd[0]
@@ -48,7 +50,9 @@ int CMD;
 YY_BUFFER_STATE buffer;
 
 
-int stdoutFD;
+//Used to save STDOUT so that when the io redirection cmd is finished, we can direct the output back to STDOUT
+int saveSTDOUT;
+int saveSTDIN;
 
 //Don't need to reset them for the next cmd right?
 int newOutfd, newInfd;
@@ -83,7 +87,7 @@ int main(void)
 		 }	
 		
 		/** To restore output stream to STDOUT after each cmd*/
-		stdoutFD = dup(STDOUT);
+		saveSTDOUT = dup(STDOUT);
 
 		CMD = getCommand();
 		yy_delete_buffer(buffer);	
@@ -99,8 +103,9 @@ int main(void)
 
 		}
 		/** To restore output stream to STDOUT after each cmd*/
-		dup2(stdoutFD, STDOUT);
-		close(stdoutFD);
+		dup2(saveSTDOUT, STDOUT);
+		close(saveSTDOUT);
+		//Need to do this to STDIN as well
 
 	}
 	return 0;
@@ -154,6 +159,8 @@ void init_scanner_and_parser(){
 
 	bioutf = 0;
 	biOutfile = '\0';
+	biinf = 0;
+	biInfile = '\0';
 
 	/** Avoid using nested for loop??
 	  * may change comtab to be a pointer (COMMAND *comtab[]) instead
@@ -221,25 +228,38 @@ void processCommand()
 
 
 	if(builtin){
-		int fd, saveSTDOUT;
+		int fd;
 		if(bioutf){ //There is redirection
-			
 			if((fd = open(biOutfile, O_CREAT | O_TRUNC | O_WRONLY, 0644)) < 0){
-				printf("Oops, fail to open file");
+				printf("Oops, fail to open file\n");
+				return;
 			}
-			saveSTDOUT = dup(STDOUT); //Save stdout
 			dup2(fd, STDOUT); //copy fd to stdou
 			close(fd); //Release fd (no longer needed sinced copied to stdout)
 			//redirect to output finished
+			//STDOUT is redirected at the end of each cmd in main();
 		}
+
+		//If there is input redirection
+		if(biinf){
+			if((fd = open(biInfile, O_RDONLY, 0600)) < 0){
+				printf("Oops, you can't open this file\n");
+				return; //Need this?
+			}
+			saveSTDIN = dup(STDIN);
+				
+			dup2(fd, STDIN);
+			close(fd);
+		}
+
 		do_it();
 
-		/*
-		if(bioutf){
-			dup2(saveSTDOUT, STDOUT); //redirect output back to STDOUT after finished
-			//close(fd);
-			close(saveSTDOUT);
-		}*/
+		//Redirection
+		if(biinf){
+			dup2(saveSTDIN, STDIN);
+			close(saveSTDIN);
+		}
+
 
 	}
 	else
@@ -327,11 +347,11 @@ void execute_it()
 
 	//Need these here instead of in the pipe loop so that any file error detected will cause the whole pipe cmd not executing
 	if( check_in_file()==ERROR ) {
-		printf("Cann't read from ");
+		printf("Oops! You can't open the file! D:\n");
 		return;
 	}
 	if( check_out_file()==ERROR ) {
-		printf("Cann't write to file");
+		printf("Oops! You can't open the file! D:\n");
 		return;
 	}
 	/** I did the checking in in_redir() and out_redir() instead */
@@ -477,7 +497,7 @@ void commandPosition(int cmd)
 						if(close(fd[0][1]) < 0){ 					//closing pipe read
 							printf("first error line 1\n");}		//output 1, input 0
 						
-						//in_redir();
+						in_redir(cmd);
 						break;
 
 		case LAST:		printf("last command, and the pipe is #%d\n", currcmd);
@@ -507,7 +527,7 @@ void commandPosition(int cmd)
 						break;
 
 		case ONLY_ONE:	printf("only one command\n");
-						//in_redir();
+						in_redir(cmd);
 						out_redir(cmd);
 						printf("arg[0] is %s\n", comtab[cmd].args[0]);
 						
@@ -547,22 +567,7 @@ void commandPosition(int cmd)
 	
 }
 
-void in_redir()
-{
-	if(comtab[currcmd].infd == STD)
-	{
-		printf("read from stdin\n");
 
-	}	
-	else if(comtab[currcmd].infd == FILE)
-	{
-		printf("read from file\n");
-	}
-	else			
-	{
-		printf("read from str\n");
-	}
-}
 
 void doCMD(int cmd)
 {
@@ -608,6 +613,17 @@ int whichCmd(cmd)
 		return -1;
 }
 
+void in_redir(cmd)
+{
+	//If user specified input redirection
+	if(comtab[cmd].infd == 1){
+
+		dup2(newInfd, STDIN);
+		close(newInfd);
+	}
+}
+//Pipeline: When is input returned???
+
 
 //newOutfd is visible to this method, so don't need pass arg					
 void out_redir(cmd)
@@ -633,6 +649,13 @@ void out_redir(cmd)
 
 int check_in_file()
 {
+	//Only check file if "<" appears in the cmd
+	if(comtab[0].infd == 1){
+		//open infile here
+		if((newInfd = open(comtab[0].infile, O_RDONLY, 0600)) < 0){ //0600?
+			return ERROR;
+		}
+	}
 	return 0;
 }
 
