@@ -283,14 +283,10 @@ void processCommand()
 void do_it(){
 	switch(bicmd){
 		case CDX :
-			printf("bistr is %s\n", bistr);
-				changedir(bistr);
+			changedir(bistr);
 			break;
 		case CDHOME :
-			printf("bistr is %s\n", bistr);
-
-		//	if(strcmp(bistr,"AMP")==0)
-		//		changedir();
+			printf("bistr is %s\n", bistr); 
 			gohome();
 			printf("im in CD home~~~\n");
 			break;
@@ -585,18 +581,20 @@ void doCMD(int cmd)
 		{
 			processAlias(unknowStr);			// find the right command
 			alProce = 1;						// now is processing on alias
+			
+			char *temp = noquoto(aliastr);
+
 			if(!alORstr)							// if alias is a string
 			{
-				char *temp = noquoto(aliastr);
 				printf("is string %s\n",temp );
 				buffer = yy_scan_string(temp);
-				free(temp);
 			}
 			else
 			{
-				printf("is alias %s\n",aliastr );
-				buffer = yy_scan_string(aliastr);
+				printf("is alias %s\n",temp );
+				buffer = yy_scan_string(temp);
 			}
+			free(temp);
 			return;
 		}
 		else
@@ -696,14 +694,22 @@ char* noquoto(char* s)
 {
 	char* temp = malloc(100);
 	int length = strlen(s);
-	printf("length is %d\n", length);
-
-	int i;
-	for( i = 0; i < length-2; i++)
+	
+	if(!alORstr)
 	{
-		temp[i] = s[i+1];
-		//printf("char %c\n", temp[i-1]);
+		printf("length is %d\n", length);
+		int i;
+		for( i = 0; i < length-2; i++)
+		{
+			temp[i] = s[i+1];
+			//printf("char %c\n", temp[i-1]);
+		}
 	}
+	else
+	{
+		strncpy(temp, s, length);
+	}
+	
 	strcat(temp, "\n");			// if there is a bug need to check here.
 
 	printf("new string %s\n", temp);

@@ -46,26 +46,24 @@ typedef struct comargs {
 
 // command line structure
 typedef struct com {
-	char* comName;				//name of the command
-	int countArgs;				//count of its arguments
+	char* comName;					//name of the command
+	int countArgs;					//count of its arguments
 	//ARGTAB *atptr;				//pointer to a list of null terminated arguments
 	char *args[MAXARGS];
-	int infd;	//Flag. infd = 0 means no in redirection				
-	int outfd;	//Flag. outfd = 0 means no out redirection, 1 means has output redirection. 2 means append instead of overwrite
-	char *infile;	//Directory for input redirection
-	char *outfile;	//Directory for output redirection
+	int infd;						//Flag. infd = 0 means no in redirection				
+	int outfd;						//Flag. outfd = 0 means no out redirection, 1 means has output redirection. 2 means append instead of overwrite
+	char *infile;					//Directory for input redirection
+	char *outfile;					//Directory for output redirection
 } COMMAND;
 
 
 /* alias structure */
 struct alias {
-	//int used;			//used = 1; new = 0 for another name of the alias reference to this alias 
-	int refalias;		// 0 refer to a string, 1 refer to an alias
+	//int used;						//used = 1; new = 0 for another name of the alias reference to this alias 
+	int refalias;					// 0 refer to a string, 1 refer to an alias
 	char *alname;
 	char *alstr;
 };
-
-
 
 
 void changedir(char*);
@@ -102,18 +100,18 @@ void out_redir(int cmd);
 
 //------- function for alias -----------
 
-int checkExistAlias(char*);			// -1 does not exist, else return index position;
+int checkExistAlias(char*);					// -1 does not exist, else return index position;
 int checkAliasLoop(char*, int);				//0 is loop, 1 is not loop;
 void addAlias(char*, char*, int);	
 void deleteAlias(char*);
-void showAlias();					//display all alias in tab
-void processAlias(char*);			//check if input is an alias
+void showAlias();							//display all alias in tab
+void processAlias(char*);					//check if input is an alias
 int alias_input(char*);
 int helper(char*, int, int);
 
 // -------------------------------------
 
-extern COMMAND comtab[];
+extern COMMAND comtab[MAXCMD];
 extern int yylex();
 extern int yylineno;
 extern char* yytext;
@@ -143,7 +141,7 @@ extern int alORstr;					//return 1 is alias, 0 is string
 extern int aliasNumb;				// count number of alias in tab
 extern char *aliasname;
 extern char *aliastr;
-extern int alProce;				// 0 is not alias processing, 1 is processing
+extern int alProce;					// 0 is not alias processing, 1 is processing
 
 // ------------ something else ------------
 
