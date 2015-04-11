@@ -21,7 +21,7 @@ int yydebug;
 /* default yylval type is int (num) */
 %token <num> BYE SETENV PRINTENV CD UNSETENV ALIAS UNALIAS GT LT PIPE AMP DOL LBRAC RBRAC
 %token <string> WORD METACHAR STRING EOL GTGT TWO AMPONE TILDE
-%type <string> cmd_name other_cmd pipe_cmd arguments builtin_cmd end_char
+%type <string> cmd_name other_cmd pipe_cmd arguments builtin_cmd end_char end_line_option
 
 
 
@@ -161,7 +161,7 @@ int yydebug;
 				{
 					printf("2>&1 %s\n", $4);
 				}
-			|	end_char
+			|	end_char	{$$ = $1;}
 			;
 
 
@@ -178,9 +178,9 @@ int yydebug;
 					//background flag
 					printf("& ");
 					$$ = "AMP";
+					amp = 1;
 				}
 			;
-
 
 	builtin_cmd		
 			:	EOL
@@ -254,7 +254,7 @@ int yydebug;
 				{
 					bicmd = CDHOME;
 					builtin = 1;
-
+					bistr = $2;
 					YYACCEPT; 
 				}
 
@@ -280,6 +280,8 @@ int yydebug;
 					bicmd = CDX;
 					builtin = 1;
 					bistr = $2;
+					printf("bistr is %s\n", bistr);
+					
 					printf("CD para\n");
 					YYACCEPT;
 				}*/
