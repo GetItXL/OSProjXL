@@ -21,7 +21,7 @@ int yydebug;
 /* default yylval type is int (num) */
 %token <num> BYE SETENV PRINTENV CD UNSETENV ALIAS UNALIAS GT LT PIPE AMP DOL LBRAC RBRAC
 %token <string> WORD METACHAR STRING EOL GTGT TWO AMPONE TILDE
-%type <string> cmd_name other_cmd pipe_cmd arguments builtin_cmd end_char end_line_option
+%type <string> cmd_name other_cmd pipe_cmd arguments builtin_cmd end_char end_line_option env_var
 
 
 
@@ -31,12 +31,9 @@ int yydebug;
 	//TWO is recognized before WORD. Thus if a WORD is 2, then it will be regonized as TWO
 	
 	cmd 		
-			:	/*
-				pipe_cmd EOL				{	//printf("%s\n", $1); 
-											YYACCEPT;}
-			|	pipe_cmd AMP 				{	printf("&\n"); YYACCEPT;}*/
+			:
 
-			pipe_cmd end_line_option	{	YYACCEPT;}
+				pipe_cmd end_line_option	{	YYACCEPT;}
 
 
 			//Can & appear in the middle of the pipeline? NO
@@ -225,13 +222,6 @@ int yydebug;
 					YYACCEPT;
 
 				}
-			/*|	PRINTENV EOL		
-				{ 	
-					bicmd = PRINTENV;
-					builtin = 1;
-					printf("PRINTENV no eol\n");
-					YYACCEPT; 
-				}*/
 
 			|	PRINTENV end_line_option
 				{
@@ -240,16 +230,6 @@ int yydebug;
 					YYACCEPT;
 				}
 
-			/*|	SETENV WORD WORD EOL	
-				{
-					bicmd = SETENV;
-					builtin = 1;
-					bistr = $2;
-					bistr2 = $3;
-					printf("SETENV no eol\n");
-					YYACCEPT;
-				}	*/
-		
 			|	SETENV WORD WORD end_line_option
 				{
 					bicmd = SETENV;
@@ -259,14 +239,15 @@ int yydebug;
 					YYACCEPT;
 				}
 
-			/*|	UNSETENV WORD EOL
+			|	SETENV WORD STRING end_line_option
 				{
-					bicmd = UNSETENV;
+					bicmd = SETENV;
 					builtin = 1;
 					bistr = $2;
-					printf("UNSETENV no eol\n");
+					bistr2 = $3;
+					printf("SETENV string TEST: %s", $3);
 					YYACCEPT;
-				}*/
+				}
 			
 			|	UNSETENV WORD end_line_option
 				{
@@ -275,15 +256,6 @@ int yydebug;
 					bistr = $2;
 					YYACCEPT;
 				}
-
-			/*|	CD EOL			
-				{ 	
-					bicmd = CDHOME;
-					builtin = 1;
-					printf("CD no para no eol\n");
-					YYACCEPT; 
-			
-				}*/
 			
 			|	CD end_line_option
 				{
@@ -293,14 +265,6 @@ int yydebug;
 					YYACCEPT; 
 				}
 
-			/*|	CD TILDE EOL			
-				{ 	
-					bicmd = CDHOME;
-					builtin = 1;
-					printf("CD tilde\n");
-					YYACCEPT; 
-			
-				}*/
 
 			|	CD TILDE end_line_option
 				{
@@ -310,16 +274,6 @@ int yydebug;
 					YYACCEPT; 
 				}
 
-			/*|	CD WORD EOL
-				{
-					bicmd = CDX;
-					builtin = 1;
-					bistr = $2;
-					printf("bistr is %s\n", bistr);
-					
-					printf("CD para\n");
-					YYACCEPT;
-				}*/
 
 			|	CD WORD end_line_option
 				{
@@ -456,7 +410,7 @@ int yydebug;
 					comtab[numbCmd].countArgs = 0;
 					//comtab[numbCmd].atptr = Allocate(ARGTAB);
 					numbCmd++;
-					unknowStr = $1;
+					//unknowStr = $1;
 					//printf("nonbuiltin without arg\n");
 					//YYACCEPT;
 
@@ -493,6 +447,12 @@ int yydebug;
 
 
 				}
+
+			|	env_var
+				{
+					$$ = $1;
+					printf("cmd is envar: %s\n", $1);
+				}
 			 ;
 
 
@@ -524,6 +484,20 @@ int yydebug;
 					//$$ = $1;
 
 				}
+
+			|	env_var
+				{
+					//Do something
+					printf("nonbuiltin w 1 envar arg. envar: %s\n", $1);
+
+				}
+
+			|	arguments env_var
+				{
+					//Do something
+					printf("nonbuiltin w multiple args. envar:%s \n ", $2);
+				}
+
 			|	arguments WORD
 				{
 					comtab[numbCmd].args[currarg] = $2;
@@ -547,6 +521,20 @@ int yydebug;
 					//$$ = strcat(temp, $2);
 				}
 			;
+
+	env_var
+			:	DOL LBRAC WORD RBRAC
+				{
+					$$ = $3;
+
+				}
+			;
+
+
+
+
+
+
 %%	
 
 /*

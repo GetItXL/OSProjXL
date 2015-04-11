@@ -36,7 +36,7 @@
 "~"								{	return TILDE;}
 
 [-a-zA-Z0-9./:~]+				{	yylval.string = strdup(yytext);		return WORD;	}
-["][a-zA-Z0-9<>|\\& ./~:]+["]  	{ 	yylval.string = strdup(yytext);	 	return STRING;	}
+["][a-zA-Z0-9<>|\\& ./~:${}]+["]  	{ 	yylval.string = strdup(yytext);	 	return STRING;	}
 [<>|"\\&]						{	yylval.string = strdup(yytext);	 	return METACHAR;	}
 [ \t]+							;	//Ignore whitespaces
 \n								{	return EOL;}
