@@ -36,8 +36,6 @@ char *biInfile = '\0';
 
 int alProce;	
 int   fd[MAXCMD][2]; 			// anything written to fd[1] can be read from fd[0]
-int *pipe_arr[10];
-char   readbuffer[80];
 
 //---- test ---
 COMMAND comtab[MAXCMD];
@@ -48,6 +46,7 @@ pid_t pid[MAXCMD];
 
 int CMD;
 YY_BUFFER_STATE buffer;
+int amp;
 
 
 //Used to save STDOUT so that when the io redirection cmd is finished, we can direct the output back to STDOUT
@@ -97,7 +96,7 @@ int main(void)
 							break;
 			case OK:		processCommand();
 							break;
-			case BYE:		exit(1);
+			case BYE:		exit(0);
 							break;
 			default:		printf("Unexpected Error! 0x0\n");
 
@@ -123,7 +122,8 @@ void shell_init()
 	inputd = 0;
 	outputd = 0;
 	alProce = 0; 			// does not process alias;
-	numbCmd = 0;			//
+	numbCmd = 0;			// numb of cmd in each command
+	amp = 0;
 }
 
 void printPrompt(){	 printf("%s :> ",getcwd(NULL, 0));}
@@ -134,6 +134,7 @@ int getCommand()
 	init_scanner_and_parser(); 
 	//The value is 1 if parsing failed because of invalid input, i.e., input that contains a syntax error or that causes YYABORT to be invoked.
 	
+
 	if (yyparse())	
 	{
 		return (understand_errors());
@@ -187,6 +188,7 @@ void init_scanner_and_parser(){
 	//But for pipelining with multiple command, make sure to reset these in parser.y
 	currcmd = 0;
 	currarg = 1; //Do this here or in parser.y. Beacuse the first arg is reserved for the cmd
+	amp = 0;
 }
 
 
@@ -199,16 +201,12 @@ void recover_from_errors()
 	// the rest of the command.
 	// To do this: use yylex() directly.
 	printf("recover_from_errors\n");
-	//yy_delete_buffer(buffer);	
-	//printf("delete buffer\n");
 
 	printf("I have idea?\n");
 	//yyrestart(stdin);					//restart to stdin !!!
 	//this may create a child process, cannot bye
 
 	//yy_delete_buffer();
-	//yylex();
-	//exit(1);
 }
 
 int understand_errors()
@@ -225,7 +223,7 @@ void processCommand()
 	//printf("processCommand\n");
 	printf("bicmd: %d\n", bicmd);
 	//printf("builtin: %d\n", builtin);
-
+	printf("contains amp?? %d\n",amp);
 
 	if(builtin){
 		int fd;
@@ -264,19 +262,26 @@ void processCommand()
 	}
 	else
 	{		execute_it();	}
-	//yy_delete_buffer(buffer);	
 }
 
 
 
 void do_it(){
-	printf("-builtin----here\n");
 	switch(bicmd){
 		case CDX :
-			changedir(bistr);
+			printf("bistr is %s\n", bistr);
+			if(bistr == '~')
+				gohome();
+			//else
+				changedir(bistr);
 			break;
 		case CDHOME :
-			gohome();printf("-----here\n");
+			printf("bistr is %s\n", bistr);
+
+		//	if(strcmp(bistr,"AMP")==0)
+		//		changedir();
+			gohome();
+			printf("im in CD home~~~\n");
 			break;
 		case PRINTENV :
 			printEnv();
@@ -319,9 +324,8 @@ void changedir(char *s){
 	}
 }
 
-
 void gohome(){
-	chdir(getenv("HOME"));
+		chdir(getenv("HOME"));
 }
 
 void printEnv(){
@@ -365,27 +369,6 @@ void execute_it()
 	//numbCmd++;
 	int numbPip;
 
-	//---------- set up for multiple pipe --------------- 
-	// if(numbCmd == 1 || numbCmd == 2)
-	// {
-	// 	//status = pipe(fd[0]); 
-	// 	//printf("......pipe is repeat\n");
-	// }
-	// else
-	// {	
-		
-	// 	for(numbPip = 0; numbPip < numbCmd-1; numbPip++)
-	// 	{
-	// 		printf("i am pipeing #%d time\n", numbPip);
-	// 		status = pipe(fd[numbPip]);
-	// 		if(status == -1)
-	// 			printf("state error!\n");
-	// 	}
-		
-	// 	status = pipe(fd[0]);
-	// 	status = pipe(fd[1]);
-	// }
-
 	
 		
 	int temp = numbCmd;
@@ -395,6 +378,8 @@ void execute_it()
 
 	for(currcmd; currcmd < numbCmd; currcmd++)
 	{
+		//---------- set up for multiple pipe --------------- 
+
 		if((numbCmd == 1 && currcmd == 0)||(numbCmd == 2 && currcmd == 0))
 		{
 			status = pipe(fd[0]); printf("......pipe is repeat\n");
@@ -450,14 +435,27 @@ If options is WNOHANG, then is it non-blocking
 
 		//waitpid(pid[0], &status, 0);
 		//printf("wait for process 2 #%d\n",currcmd);
-		if(waitpid(pid[currcmd-1], &status, 0) != pid[currcmd-1] )
-			fprintf(stderr, "process %d exits with %d\n", pid[currcmd-1], WEXITSTATUS(status));
-	  
+		if(amp == 0)
+		{
+			if(waitpid(pid[currcmd-1], &status, 0) != pid[currcmd-1] )
+				fprintf(stderr, "process %d exits with %d\n", pid[currcmd-1], WEXITSTATUS(status));
+		}
+		else
+		{
+			waitpid(pid[currcmd-1], &status, WNOHANG);
+		}
 	 }
 	 else
 	 {
 	 	close(fd[0][0]); close(fd[0][1]); 
-	 	waitpid(pid[currcmd-1], &status, 0);
+	 	if(amp == 0)	
+	 		waitpid(pid[currcmd-1], &status, 0);
+	 	else
+	 	{	
+	 		waitpid(pid[currcmd-1], &status, WNOHANG);
+	 		printf("run in the background.\n" );
+	 	}
+	 	
 	 }
 	  
 					
@@ -473,7 +471,7 @@ int executable()
 		builtin = 1;
 		return (OK);	
 	}
-	else								// check whether it's a system call
+	else								// check whether it's a system call, but how?
 	{
 		return (OK);
 	}
@@ -685,6 +683,8 @@ char* noquoto(char* s)
 		temp[i] = s[i+1];
 		//printf("char %c\n", temp[i-1]);
 	}
+	strcat(temp, "\n");			// if there is a bug need to check here.
+
 	printf("new string %s\n", temp);
 
 

@@ -151,6 +151,8 @@ extern int inputd;					// 0 stdin, 1 string, 2 files
 extern int outputd;					// 0 stdout, 1 string, 2 files
 extern char *unknowStr;
 extern void yyerror(char *);
+extern int amp;						// check whether the command contains & at the end
+									// 0 null, 1 contain
 
 // ------------- read string as command ----------
 
