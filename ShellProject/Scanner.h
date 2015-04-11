@@ -101,13 +101,13 @@ void out_redir(int cmd);
 //------- function for alias -----------
 
 int checkExistAlias(char*);					// -1 does not exist, else return index position;
-int checkAliasLoop(char*, int);				//0 is loop, 1 is not loop;
+int checkAliasLoop(char*, char*, int);				//0 is loop, 1 is not loop;
 void addAlias(char*, char*, int);	
 void deleteAlias(char*);
 void showAlias();							//display all alias in tab
 void processAlias(char*);					//check if input is an alias
-int alias_input(char*);
-int helper(char*, int, int);
+//int alias_input(char*);
+//int helper(char*, int, int);
 
 // -------------------------------------
 
