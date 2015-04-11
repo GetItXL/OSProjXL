@@ -31,11 +31,12 @@ int yydebug;
 	//TWO is recognized before WORD. Thus if a WORD is 2, then it will be regonized as TWO
 	
 	cmd 		
-			:	
+			:	/*
 				pipe_cmd EOL				{	//printf("%s\n", $1); 
 											YYACCEPT;}
-			|	pipe_cmd AMP 				{	printf("&\n"); YYACCEPT;}
-			|	pipe_cmd end_line_option	{	YYACCEPT;}
+			|	pipe_cmd AMP 				{	printf("&\n"); YYACCEPT;}*/
+
+			pipe_cmd end_line_option	{	YYACCEPT;}
 
 
 			/*
@@ -160,6 +161,7 @@ int yydebug;
 				{
 					printf("2>&1 %s\n", $4);
 				}
+			|	end_char
 			;
 
 
@@ -171,10 +173,10 @@ int yydebug;
 					//printf("EOL ");
 					$$ = "EOL";
 				}
-			|	AMP
+			|	AMP EOL
 				{
 					//background flag
-					//printf("& ");
+					printf("& ");
 					$$ = "AMP";
 				}
 			;
@@ -188,13 +190,13 @@ int yydebug;
 					YYACCEPT;
 
 				}
-			|	PRINTENV EOL		
+			/*|	PRINTENV EOL		
 				{ 	
 					bicmd = PRINTENV;
 					builtin = 1;
 					printf("PRINTENV no eol\n");
 					YYACCEPT; 
-				}
+				}*/
 
 			|	PRINTENV end_line_option
 				{
@@ -203,7 +205,7 @@ int yydebug;
 					YYACCEPT;
 				}
 
-			|	SETENV WORD WORD EOL	
+			/*|	SETENV WORD WORD EOL	
 				{
 					bicmd = SETENV;
 					builtin = 1;
@@ -211,7 +213,7 @@ int yydebug;
 					bistr2 = $3;
 					printf("SETENV no eol\n");
 					YYACCEPT;
-				}	
+				}	*/
 		
 			|	SETENV WORD WORD end_line_option
 				{
@@ -222,14 +224,14 @@ int yydebug;
 					YYACCEPT;
 				}
 
-			|	UNSETENV WORD EOL
+			/*|	UNSETENV WORD EOL
 				{
 					bicmd = UNSETENV;
 					builtin = 1;
 					bistr = $2;
 					printf("UNSETENV no eol\n");
 					YYACCEPT;
-				}
+				}*/
 			
 			|	UNSETENV WORD end_line_option
 				{
@@ -239,14 +241,14 @@ int yydebug;
 					YYACCEPT;
 				}
 
-			|	CD EOL			
+			/*|	CD EOL			
 				{ 	
 					bicmd = CDHOME;
 					builtin = 1;
 					printf("CD no para no eol\n");
 					YYACCEPT; 
 			
-				}
+				}*/
 			
 			|	CD end_line_option
 				{
@@ -256,14 +258,14 @@ int yydebug;
 					YYACCEPT; 
 				}
 
-			|	CD TILDE EOL			
+			/*|	CD TILDE EOL			
 				{ 	
 					bicmd = CDHOME;
 					builtin = 1;
 					printf("CD tilde\n");
 					YYACCEPT; 
 			
-				}
+				}*/
 
 			|	CD TILDE end_line_option
 				{
@@ -273,14 +275,14 @@ int yydebug;
 					YYACCEPT; 
 				}
 
-			|	CD WORD EOL
+			/*|	CD WORD EOL
 				{
 					bicmd = CDX;
 					builtin = 1;
 					bistr = $2;
 					printf("CD para\n");
 					YYACCEPT;
-				}
+				}*/
 
 			|	CD WORD end_line_option
 				{
