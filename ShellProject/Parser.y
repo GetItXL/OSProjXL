@@ -39,45 +39,7 @@ int yydebug;
 			pipe_cmd end_line_option	{	YYACCEPT;}
 
 
-			/*
-			pipe_cmd GT WORD EOL
-				{
-					//Handle output redirection
-					comtab[numbCmd-1].outfd = 1;
-					comtab[numbCmd-1].outfile = $3;
-
-
-					printf("cmd > %s\n", $3);
-					YYACCEPT;
-					
-				}
-			|	pipe_cmd LT WORD EOL
-				{
-					//Handle io redirect in
-					printf("cmd < %s\n", $3);
-					YYACCEPT;
-					
-				}
-			|	pipe_cmd LT WORD GT WORD EOL
-				{
-					//Handle both
-					printf("cmd < %s > %s\n", $3, $5);
-					YYACCEPT;
-
-				}
-			|	pipe_cmd LT WORD GT WORD BACKGROUND
-				{
-					//handle both
-					//handle background
-					printf("cmd < %s > %s &\n", $3, $5);
-					YYACCEPT;
-				}*/
-
-
-
 			//Can & appear in the middle of the pipeline? NO
-
-
 
 			|	builtin_cmd				{	;}								
 			|	alias_cmd				{	;}
@@ -88,9 +50,7 @@ int yydebug;
 	end_line_option
 			:	LT WORD end_char
 				{
-					//Handle io redirect in
-					
-					//Builtin Cmd
+					//Builtin
 					biinf = 1;
 					biInfile = $2;
 
@@ -108,51 +68,126 @@ int yydebug;
 				}
 			|	LT WORD GTGT WORD end_char
 				{
-					//
+					//builtin
+					biinf = 1;
+					biInfile = $2;
+					bioutf = 2; //append
+					biOutfile = $4;
+
+					//nonbuiltin
+					comtab[0].infd = 1;		//input redirect is for the first cmd in the comtab
+					comtab[0].infile = $2;
+					comtab[numbCmd-1].outfd = 2; //append
+					comtab[numbCmd-1].outfile = $4;
+
+
 					printf("< infile >> errout %s\n", $5);
 				}
 			|	LT WORD GT WORD end_char
 				{
-					//Handle both
-					//printf("cmd < %s > %s\n", $3, $5);
-					//YYACCEPT;
+					//builtin
+					biinf = 1;
+					biInfile = $2;
+					bioutf = 1; //append
+					biOutfile = $4;
+
+					//nonbuiltin
+					comtab[0].infd = 1;		//input redirect is for the first cmd in the comtab
+					comtab[0].infile = $2;
+					comtab[numbCmd-1].outfd = 1; //append
+					comtab[numbCmd-1].outfile = $4;
+
+
 					printf("< infile > outfile %s\n", $5);
 				}
 			|	LT WORD GT WORD TWO GT WORD end_char
 				{
+					//builtin
+					biinf = 1;
+					biInfile = $2;
+					bioutf = 1; //append
+					biOutfile = $4;
+
+					//nonbuiltin
+					comtab[0].infd = 1;		//input redirect is for the first cmd in the comtab
+					comtab[0].infile = $2;
+					comtab[numbCmd-1].outfd = 1; //append
+					comtab[numbCmd-1].outfile = $4;
+
+					//Need to handle 2>file
+
 					printf("< infile > outfile 2>file %s\n", $8);
 				}
 			|	LT WORD GT WORD TWO GT AMPONE end_char
 				{
+					//builtin
+					biinf = 1;
+					biInfile = $2;
+					bioutf = 1; //append
+					biOutfile = $4;
+
+					//nonbuiltin
+					comtab[0].infd = 1;		//input redirect is for the first cmd in the comtab
+					comtab[0].infile = $2;
+					comtab[numbCmd-1].outfd = 1; //append
+					comtab[numbCmd-1].outfile = $4;
+
+					//Need to handle 2>&1
+
 					printf("< infile > outfile 2>&1 %s\n", $8);
 				}
 			|	GT WORD end_char
 				{
-					//Handle output redirection
+					//nonbuiltin
 					comtab[numbCmd-1].outfd = 1;
 					comtab[numbCmd-1].outfile = $2;
 
-					//For builtin
+					//builtin
 					bioutf = 1; //Indicates that there is a outfile redirection
 					biOutfile = $2;
-
-					//printf("cmd > %s\n", $3);
-					//YYACCEPT;		
+	
 					printf("> outfile %s\n", $3);			
 				}
 			|	GT WORD TWO GT WORD end_char
 				{
+					//nonbuiltin
+					comtab[numbCmd-1].outfd = 1;
+					comtab[numbCmd-1].outfile = $2;
+
+					//builtin
+					bioutf = 1; //Indicates that there is a outfile redirection
+					biOutfile = $2;
+
+					//Need to handle 2>file
+
 					printf("> outfile 2>file %s\n", $6);
 				}
 			|	GT WORD TWO GT AMPONE end_char
 				{
+					//nonbuiltin
+					comtab[numbCmd-1].outfd = 1;
+					comtab[numbCmd-1].outfile = $2;
+
+					//builtin
+					bioutf = 1; //Indicates that there is a outfile redirection
+					biOutfile = $2;
+
+					//Need to handle 2>&1
+
 					printf("> outfile 2>&1 %s\n", $6);
 				}
 			|	GTGT WORD end_char
 				{
+					//nonbuiltin
+					comtab[numbCmd-1].outfd = 2;
+					comtab[numbCmd-1].outfile = $2;
+
+					//builtin
+					bioutf = 2; //Indicates that there is a outfile redirection
+					biOutfile = $2;
 					printf(">> errout %s\n", $3);
 				} 
-				//!!!!!Can you have & after >>?
+
 			|	TWO GT WORD end_char
 				{
 					printf("2>file %s\n", $4);

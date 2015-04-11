@@ -51,7 +51,7 @@ typedef struct com {
 	//ARGTAB *atptr;				//pointer to a list of null terminated arguments
 	char *args[MAXARGS];
 	int infd;	//Flag. infd = 0 means no in redirection				
-	int outfd;	//Flag. outfd = 0 means no out redirection
+	int outfd;	//Flag. outfd = 0 means no out redirection, 1 means has output redirection. 2 means append instead of overwrite
 	char *infile;	//Directory for input redirection
 	char *outfile;	//Directory for output redirection
 } COMMAND;
@@ -124,7 +124,7 @@ extern int bicmd;
 extern char *bistr;
 extern char *bistr2;
 
-extern int bioutf; //0 = no outfile redirection. 1 = has redirection
+extern int bioutf; //0 = no outfile redirection. 1 = has redirection. 2 means append instead of overwrite
 extern char *biOutfile;
 extern int biinf;	//0 = no input redirection. 1 = has input redirection
 extern char *biInfile;

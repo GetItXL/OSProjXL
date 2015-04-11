@@ -228,10 +228,24 @@ void processCommand()
 	if(builtin){
 		int fd;
 		if(bioutf){ //There is redirection
+			if(bioutf == 2){ // append
+				//For appending, if the file does not exist, it creates one also
+				fd = open(biOutfile, O_CREAT | O_APPEND | O_WRONLY, 0644);
+			}
+			else{ //not appending = overwrite
+				fd = open(biOutfile, O_CREAT | O_TRUNC | O_WRONLY, 0644);
+			}
+			/*
 			if((fd = open(biOutfile, O_CREAT | O_TRUNC | O_WRONLY, 0644)) < 0){
 				printf("Oops, fail to open file\n");
 				return;
-			}
+			}*/
+
+			if(fd < 0){
+				printf("Oops, fail to open file\n");
+				return;
+			}	
+
 			dup2(fd, STDOUT); //copy fd to stdou
 			close(fd); //Release fd (no longer needed sinced copied to stdout)
 			//redirect to output finished
@@ -270,9 +284,6 @@ void do_it(){
 	switch(bicmd){
 		case CDX :
 			printf("bistr is %s\n", bistr);
-			if(bistr == '~')
-				gohome();
-			//else
 				changedir(bistr);
 			break;
 		case CDHOME :
@@ -627,7 +638,7 @@ void in_redir(cmd)
 void out_redir(cmd)
 {
 	//Can also access with comtab[numbCmd-1]
-	if(comtab[cmd].outfd == 1){
+	if(comtab[cmd].outfd){
 		dup2(newOutfd, STDOUT);
 		close(newOutfd);
 	}
@@ -661,12 +672,22 @@ int check_out_file()
 {
 	//Only check file existence if there is io redirection
 	//numbCmd -1 = last cmd
-	if(comtab[numbCmd-1].outfd == 1){
+	if(comtab[numbCmd-1].outfd){
 		//Created the outfile here
-		if((newOutfd = open(comtab[numbCmd-1].outfile, O_CREAT | O_TRUNC | O_WRONLY, 0644)) < 0)
+		//If append
+		if(comtab[numbCmd-1].outfd == 2){ //append
+			newOutfd = open(comtab[numbCmd-1].outfile, O_CREAT | O_APPEND | O_WRONLY, 0644);
+		}
+		else{ //do not append
+			newOutfd = open(comtab[numbCmd-1].outfile, O_CREAT | O_TRUNC | O_WRONLY, 0644);
+		}		
+
+		//if((newOutfd = open(comtab[numbCmd-1].outfile, O_CREAT | O_TRUNC | O_WRONLY, 0644)) < 0)
+		//	return ERROR;
+
+		if(newOutfd < 0)
 			return ERROR;
 	}
-
 	return 0;
 }
 
