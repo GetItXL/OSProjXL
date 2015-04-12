@@ -38,44 +38,6 @@ int checkExistAlias(char* str)
 	return -1;
 }
 
-// int helper(char *str, int refalias, int times)
-// {
-// 	if(times > aliasNumb)										//base case
-// 		return ERROR;
-
-// 	if(refalias == 1)											// is an alias
-// 	{
-// 		int i;
-// 		for(i = 0; i < aliasNumb; i++)
-// 		{
-// 			if(strcmp(aliastab[i].alname,str) == 0)							// this is a loop
-// 				return ERROR;
-// 			if(strcmp(aliastab[i].alname,str) == 0)				// if the string is in the alias table
-// 			{													// recursively check for 
-// 				if(helper(aliastab[i].alstr, aliastab[i].refalias, ++times) == OK)		
-// 					return OK;
-// 				else
-// 					return ERROR;
-// 			}
-// 		}
-// 		//need to check if your tail = my name;
-		
-// 		int temp = strcmp(aliasname,str);
-// 		//printf("hahaha %s and %s, %d\n",aliasname,str,temp);
-// 		if(strcmp(aliasname,str) == 0)
-// 		{
-// 			//printf("dfamakehahaha\n");
-// 			return -1;
-// 		}
-// 		else
-// 			return (OK);
-
-			
-// 	}
-// 	else
-// 		return (OK);
-// }
-
 int checkAliasLoop(char* name, char *str, int refalias)
 {
 	
@@ -116,7 +78,7 @@ int checkAliasLoop(char* name, char *str, int refalias)
 						return ERROR;
 					if(strcmp(checkexit->x ,name)== 0)
 						return ERROR;
-					checkexit = root->next;
+					checkexit = checkexit->next;
 				}	
 				printf("temp is %d , and temp is  %s in the linkedlist!\n", temp, aliastab[temp].alstr);
 					
@@ -141,29 +103,6 @@ int checkAliasLoop(char* name, char *str, int refalias)
 	  }
 	  else
 	  		return OK;
-
-	/*
-	if(refalias == 1)											// is an alias
-	{
-		int i;
-		for(i = 0; i < aliasNumb; i++)
-		{
-			if(strcmp(aliastab[i].alname,str) == 0)				// if my string is your name
-			{													// recursively to check if your string is other's name
-				if(helper(aliastab[i].alstr, aliastab[i].refalias, 1) == OK)		
-				{
-					//	printf("lsdfadaflaal\n");
-						return OK;
-				}
-				else
-					return ERROR;	
-			}	
-		}
-		return (OK);
-	}
-	else
-		return (OK);
-	*/
 }		//1 is loop, 0 is not loop;
 
 
@@ -172,24 +111,14 @@ void addAlias(char* name, char* str, int refalias)
 {
 	//printf("name is %s, string is %s.\n", name, str);
 	int aliasIndex = checkExistAlias(name);
-	//printf("aliasIndex is %d\n", aliasIndex);
-	
-	if(aliasIndex != -1)
-	{
-		aliastab[aliasIndex].alstr = str;
-		if(refalias == 0)					//refer to a string 
-			aliastab[aliasIndex].refalias = 0;
-		else
-			aliastab[aliasIndex].refalias = 1;	
-		return;
-	}
+	printf("aliasIndex is %d\n", aliasIndex);
 
 	if(checkAliasLoop(name, str, refalias) == 0)
 	{
 		//printf("checkAliasLoop");
 		//temp = noquoto(str);
-		// if(aliasIndex == (-1))			//if does not exist alias has same name
-		// {
+		if(aliasIndex == (-1))			//if does not exist alias has same name
+		{
 			//printf("aliasNumber is %d\n", aliasNumb);
 			aliastab[aliasNumb].alname = name;
 			aliastab[aliasNumb].alstr = str;
@@ -198,16 +127,15 @@ void addAlias(char* name, char* str, int refalias)
 			else
 				aliastab[aliasNumb].refalias = 1;
 			aliasNumb++;
-		//}
-		// else
-		// {
-		// 	aliastab[aliasIndex].alstr = str;
-		// 	if(refalias == 0)					//refer to a string 
-		// 		aliastab[aliasIndex].refalias = 0;
-		// 	else
-		// 		aliastab[aliasIndex].refalias = 1;	
-		// }
-
+		}
+		else
+		{
+			aliastab[aliasIndex].alstr = str;
+			if(refalias == 0)					//refer to a string 
+				aliastab[aliasIndex].refalias = 0;
+			else
+				aliastab[aliasIndex].refalias = 1;	
+		}
 	}
 	else
 	{
@@ -260,13 +188,3 @@ void processAlias(char* unknowStr)
 	}
 }
 
-
-// int alias_input(char* cmd)
-// {
-	
-// 	//should return alias name corrsponding index value;
-
-// 	printf("in the alias_input, cmd is %s \n", cmd);
-	
-// 	return -1;
-// }
