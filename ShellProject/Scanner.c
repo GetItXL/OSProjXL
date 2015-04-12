@@ -816,20 +816,19 @@ int checkSystemCall(){
 
 	char *pathToken;
 	pathToken = strtok(path, ":"); 
-	//printf("pathtoken: %s\n", pathToken);
+	printf("pathtoken: %s\n", pathToken);
 
 
 	char *fullpath = malloc(sizeof(pathToken) + 50);
-	fullpath = strcat(fullpath, pathToken);
-	//printf("Added slash: %s\n", pathToken);
-	fullpath = strcat(fullpath, "/");
-	fullpath = strcat(fullpath, comtab[currcmd].comName);
+	strcpy(fullpath, pathToken); //copy pathToken to fullpath
+	strcat(fullpath, "/");
+	strcat(fullpath, comtab[currcmd].comName);
 
-	//printf("fullpath: %s\n", fullpath);
+	printf("fullpath: %s\n", fullpath);
 
 	int ac;
 	ac = access(fullpath, X_OK);
-	//printf("access result: %d\n", ac);
+	printf("access result: %d\n", ac);
 	if(ac == 0)
 		return 1;
 	
@@ -844,14 +843,14 @@ int checkSystemCall(){
 
 
 		fullpath = malloc(sizeof(pathToken) + 50);
-		fullpath = strcat(fullpath, pathToken);
-		fullpath = strcat(fullpath, "/");
-		fullpath = strcat(fullpath, comtab[currcmd].comName);
-		//printf("fullpath: %s\n", fullpath);
+		strcpy(fullpath, pathToken);
+		strcat(fullpath, "/");
+		strcat(fullpath, comtab[currcmd].comName);
+		printf("fullpath: %s\n", fullpath);
 		//free(fullpath);
 		
 		ac = access(fullpath, X_OK);
-		//printf("access result: %d\n", ac);
+		printf("access result: %d\n", ac);
 		if(ac == 0)
 			return 1;
 
@@ -863,20 +862,20 @@ int checkSystemCall(){
 
 	char *homeToken;
 	homeToken = strtok(home, ":"); 
-	//printf("homeToken: %s\n", homeToken);
+	printf("homeToken: %s\n", homeToken);
 
 
-	char *fullhpath = malloc(sizeof(pathToken) + 50);
-	fullhpath = strcat(fullhpath, homeToken);
+	char *fullhpath = malloc(sizeof(homeToken) + 50);
+	strcpy(fullhpath, homeToken);
 	//printf("Added slash: %s\n", pathToken);
-	fullhpath = strcat(fullhpath, "/");
-	fullhpath = strcat(fullhpath, comtab[currcmd].comName);
+	strcat(fullhpath, "/");
+	strcat(fullhpath, comtab[currcmd].comName);
 
-	//printf("fullhpath: %s\n", fullhpath);
+	printf("fullhpath: %s\n", fullhpath);
 
 	int ach;
 	ach = access(fullhpath, X_OK);
-	//printf("access result: %d\n", ach);
+	printf("access result: %d\n", ach);
 	if(ach == 0)
 		return 1;
 
@@ -891,14 +890,14 @@ int checkSystemCall(){
 
 
 		fullhpath = malloc(sizeof(homeToken) + 50);
-		fullhpath = strcat(fullhpath, homeToken);
-		fullhpath = strcat(fullhpath, "/");
-		fullhpath = strcat(fullhpath, comtab[currcmd].comName);
-		//printf("fullhpath: %s\n", fullhpath);
+		strcpy(fullhpath, homeToken);
+		strcat(fullhpath, "/");
+		strcat(fullhpath, comtab[currcmd].comName);
+		printf("fullhpath: %s\n", fullhpath);
 		//free(fullpath);
 		
 		ach = access(fullhpath, X_OK);
-		//printf("access result: %d\n", ac);
+		printf("access result: %d\n", ac);
 		if(ach == 0)
 			return 1;
 
