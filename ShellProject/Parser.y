@@ -387,8 +387,6 @@ int isWildcardPattern(char*);
 					//$$ = $1;
 				}
 
-
-
 			|	pipe_cmd PIPE other_cmd
 				{
 					builtin = 0;
@@ -451,7 +449,6 @@ int isWildcardPattern(char*);
 
 
 				}
-
 			|	env_var
 				{
 					$$ = $1;
@@ -650,7 +647,7 @@ int isWildcardPattern(char*);
 			:	DOL LBRAC WORD RBRAC
 				{
 					$$ = $3;
-
+					
 				}
 			;
 

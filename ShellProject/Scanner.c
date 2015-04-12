@@ -3,7 +3,7 @@
 #include "Scanner.h"
 #include <unistd.h>
 #include "alias.c"
-//#include <stdlib.h>
+#include <stdlib.h>
 //#include "y.tab.h"
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -41,6 +41,7 @@ char *biInfile = '\0';
 int alProce;	
 int   fd[MAXCMD][2]; 			// anything written to fd[1] can be read from fd[0]
 
+
 //---- test ---
 COMMAND comtab[MAXCMD];
 int currcmd;
@@ -51,7 +52,8 @@ pid_t pid[MAXCMD];
 int CMD;
 YY_BUFFER_STATE buffer;
 int amp;
-
+int envCmd;
+char* envValue;
 
 //Used to save STDOUT so that when the io redirection cmd is finished, we can direct the output back to STDOUT
 int saveSTDOUT;
@@ -65,13 +67,6 @@ int newOutfd, newInfd;
 
 int main(void) 
 {
-	/*
-		char string[] = "\"sdfa\"\n String";
-	    YY_BUFFER_STATE buffer = yy_scan_string(string);
-	    yyparse();
-	    yy_delete_buffer(buffer);
-    return 0;
-    */
 
     //For handling Ctrl + C
 	signal(SIGINT, SIG_IGN);
@@ -87,7 +82,7 @@ int main(void)
 		 if(!alProce)
 		 {
 			printPrompt();
-		 }	
+		 }
 		
 		/** To restore output stream to STDOUT after each cmd*/
 		saveSTDOUT = dup(STDOUT);
@@ -112,8 +107,6 @@ int main(void)
 
 	}
 	return 0;
-	
-	
 }
 
 
@@ -128,6 +121,7 @@ void shell_init()
 	alProce = 0; 			// does not process alias;
 	numbCmd = 0;			// numb of cmd in each command
 	amp = 0;
+	envCmd = 0;
 }
 
 void printPrompt(){	 printf("%s :> ",getcwd(NULL, 0));}
@@ -166,7 +160,7 @@ void init_scanner_and_parser(){
 	biOutfile = '\0';
 	biinf = 0;
 	biInfile = '\0';
-
+	envCmd = 0;
 	/** Avoid using nested for loop??
 	  * may change comtab to be a pointer (COMMAND *comtab[]) instead
 	  */
@@ -209,8 +203,7 @@ void recover_from_errors()
 	printf("I have idea?\n");
 	//yyrestart(stdin);					//restart to stdin !!!
 	//this may create a child process, cannot bye
-
-	//yy_delete_buffer();
+	//yylex();
 }
 
 int understand_errors()
@@ -239,6 +232,7 @@ void processCommand()
 			else{ //not appending = overwrite
 				fd = open(biOutfile, O_CREAT | O_TRUNC | O_WRONLY, 0644);
 			}
+
 			/*
 			if((fd = open(biOutfile, O_CREAT | O_TRUNC | O_WRONLY, 0644)) < 0){
 				printf("Oops, fail to open file\n");
@@ -282,15 +276,13 @@ void processCommand()
 	{		execute_it();	}
 }
 
-
-
 void do_it(){
 	switch(bicmd){
+		printf("bistr is %s\n", bistr); 
 		case CDX :
 			changedir(bistr);
 			break;
 		case CDHOME :
-			printf("bistr is %s\n", bistr); 
 			gohome();
 			printf("im in CD home~~~\n");
 			break;
@@ -336,7 +328,11 @@ void changedir(char *s){
 }
 
 void gohome(){
-		chdir(getenv("HOME"));
+	//chdir(getenv("HOME"));
+	char* temp = "HOME";
+	char* value = getenv(temp);
+	printf("gohome here is %s\n",value);
+	chdir(value);
 }
 
 void printEnv(){
@@ -354,12 +350,6 @@ void execute_it()
 	// Handle  command execution, pipelining, i/o redirection, and background processing. 
 	// Utilize a command table whose components are plugged in during parsing by yacc. 
 
-
-	/*
-	 * Check io file existence in case of io-redirection.
-	*/
-
-
 	//Need these here instead of in the pipe loop so that any file error detected will cause the whole pipe cmd not executing
 	if( check_in_file()==ERROR ) {
 		printf("Oops! You can't open the file! D:\n");
@@ -374,14 +364,8 @@ void execute_it()
 	//Build up the pipeline (create and set up pipe end points (using pipe, dup) 
 	//Process background
 
-	// pipeline implementation
-
 	int status;
-	//numbCmd++;
 	int numbPip;
-
-	
-		
 	int temp = numbCmd;
 
 	printf("current cmd is %d, and numbCmd is %d \n",currcmd, numbCmd);
@@ -475,19 +459,30 @@ If options is WNOHANG, then is it non-blocking
 int executable()
 {
 	// first check if it's an alias
-
+	printf("unknowStr is %s/n",unknowStr);
 	if(checkExistAlias(unknowStr)!= -1)
 	{
 		printf("in executable() Its alias\n");
 		builtin = 1;
 		return (OK);	
 	}
-	else								// check whether it's a system call, but how?
+	else 								// check whether it's a system call, but how?
 	{
+		envValue = getenv(unknowStr);
+		printf("value is %s\n", envValue);
+
+		if(envValue != 0)
+		{
+			envCmd = 1;
+			printf("%s is an envCmd\n", unknowStr);
+			alProce = 1;
+			return (OK);
+		}	
+
+		printf("%s is not an envCmd\n", unknowStr);
 		return (OK);
 	}
-				
-	return 0;
+			
 } 
 
 void commandPosition(int cmd)
@@ -560,9 +555,18 @@ void commandPosition(int cmd)
 
 	}
 	//printf("finished commandPosition: %d\n", cmd);
-			/* 
+	/* 
 	 * Check Command Accessability and Executability
 	*/
+
+	 if(envCmd == 1)					//assume it is an env variable
+	{
+		alProce = 1;
+		printf("assume it is an env variable, %s\n", envValue);
+		buffer = yy_scan_string(addEOL(envValue));
+		return;
+	}
+
 	if(executable() == (ERROR)) {  
 		//use access() system call with X_OK
 		printf("Command not Found!\n");
@@ -577,18 +581,17 @@ void commandPosition(int cmd)
 }
 
 
-
 void doCMD(int cmd)
 {
 	//printf("Command! Found! %d \n", cmd);
-		if(builtin == 1)					//asume it can only be alias
+		if(builtin == 1)										/* first check if it is an alias */
 		{
-			processAlias(unknowStr);			// find the right command
-			alProce = 1;						// now is processing on alias
+			processAlias(unknowStr);							// find the right command
+			alProce = 1;										// now is processing on alias
 			
 			char *temp = noquoto(aliastr);
 
-			if(!alORstr)							// if alias is a string
+			if(!alORstr)										// if alias is a string
 			{
 				printf("is string %s\n",temp );
 				buffer = yy_scan_string(temp);
@@ -601,14 +604,20 @@ void doCMD(int cmd)
 			free(temp);
 			return;
 		}
-		else
+		else if(envCmd == 1)									/*  check if it is an enviroment vairable */
 		{
-			//printf("that is not alias\n");
-		//	printf("print name is %s, and cmd is %d\n",comtab[cmd].comName,cmd);
+			alProce = 1;
+			printf("assume it is an env variable, %s\n", envValue);
+			buffer = yy_scan_string(addEOL(envValue));
+			return;
+		}	//printf("that is not alias\n");	
+		else													/* other command */
+		{
+			printf("print name is %s, and cmd is %d\n",comtab[cmd].comName,cmd);
 			if( execvp(comtab[cmd].comName, comtab[cmd].args) < 0 ){
 				printf("error executing %s, and %s\n", comtab[cmd].comName, strerror(errno));
 			}
-			exit(0);
+			exit(0);	
 		}
 }
 
@@ -634,7 +643,6 @@ void in_redir(cmd)
 	}
 }
 //Pipeline: When is input returned???
-
 
 //newOutfd is visible to this method, so don't need pass arg					
 void out_redir(cmd)
@@ -693,7 +701,6 @@ int check_out_file()
 	return 0;
 }
 
-
 char* noquoto(char* s)
 {
 	char* temp = malloc(100);
@@ -704,20 +711,23 @@ char* noquoto(char* s)
 		printf("length is %d\n", length);
 		int i;
 		for( i = 0; i < length-2; i++)
-		{
 			temp[i] = s[i+1];
-			//printf("char %c\n", temp[i-1]);
-		}
 	}
 	else
-	{
 		strncpy(temp, s, length);
-	}
-	
+
 	strcat(temp, "\n");			// if there is a bug need to check here.
-
 	printf("new string %s\n", temp);
+	return temp;
+}
 
+char* addEOL(char* s)
+{
+	char* temp = malloc(100);
+	int length = strlen(s);
+	strncpy(temp, s, length);
+	strcat(temp, "\n");			// if there is a bug need to check here.
+	printf("new addEOL string %s\n", temp);
 
 	return temp;
 }

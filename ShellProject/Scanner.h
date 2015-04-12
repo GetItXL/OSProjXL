@@ -90,6 +90,7 @@ int check_out_file();
 char* noquoto(char*);				// no quoto
 int executable();
 void doCMD(int);
+char* addEOL(char*);
 
 // ------------------ pipeline functions ------------
 
@@ -126,6 +127,9 @@ extern int bioutf; //0 = no outfile redirection. 1 = has redirection. 2 means ap
 extern char *biOutfile;
 extern int biinf;	//0 = no input redirection. 1 = has input redirection
 extern char *biInfile;
+
+extern int envCmd;
+extern char* envValue;
 
 // ---------------- for pipline ---------------
 
