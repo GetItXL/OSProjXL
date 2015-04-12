@@ -66,7 +66,7 @@ int startWithTilde(char *);
 					//put biinfile = ..;
 					//and comtab[currcmd].infile = ...;
 					//It's ok to put both of them here because system checks if a cmd is built in or not FIRST
-					printf("< infile %s\n", $3);
+				//	printf("< infile %s\n", $3);
 				}
 			|	LT WORD GTGT WORD end_char
 				{
@@ -83,7 +83,7 @@ int startWithTilde(char *);
 					comtab[numbCmd-1].outfile = $4;
 
 
-					printf("< infile >> errout %s\n", $5);
+				//	printf("< infile >> errout %s\n", $5);
 				}
 			|	LT WORD GT WORD end_char
 				{
@@ -100,7 +100,7 @@ int startWithTilde(char *);
 					comtab[numbCmd-1].outfile = $4;
 
 
-					printf("< infile > outfile %s\n", $5);
+				//	printf("< infile > outfile %s\n", $5);
 				}
 			|	LT WORD GT WORD TWO GT WORD end_char
 				{
@@ -120,7 +120,7 @@ int startWithTilde(char *);
 					errToFile = 1;
 					errFile = $7;
 
-					printf("< infile > outfile 2>file %s\n", $8);
+				//	printf("< infile > outfile 2>file %s\n", $8);
 				}
 			|	LT WORD GT WORD TWOAMPONE end_char
 				{
@@ -139,7 +139,7 @@ int startWithTilde(char *);
 					//Need to handle 2>&1
 					errToSTDOUT = 1;
 
-					printf("< infile > outfile 2>&1 %s\n", $6);
+				//	printf("< infile > outfile 2>&1 %s\n", $6);
 				}
 			|	GT WORD end_char
 				{
@@ -151,7 +151,7 @@ int startWithTilde(char *);
 					bioutf = 1; //Indicates that there is a outfile redirection
 					biOutfile = $2;
 	
-					printf("> outfile %s\n", $3);			
+				//	printf("> outfile %s\n", $3);			
 				}
 			|	GT WORD TWO GT WORD end_char
 				{
@@ -167,7 +167,7 @@ int startWithTilde(char *);
 					errToFile = 1;
 					errFile = $5;
 
-					printf("> outfile 2>file %s\n", $6);
+				//	printf("> outfile 2>file %s\n", $6);
 				}
 			|	GT WORD TWOAMPONE end_char
 				{
@@ -182,7 +182,7 @@ int startWithTilde(char *);
 					//Need to handle 2>&1
 					errToSTDOUT = 1;
 
-					printf("> outfile 2>&1 %s\n", $4);
+				//	printf("> outfile 2>&1 %s\n", $4);
 				}
 			|	GTGT WORD end_char
 				{
@@ -193,19 +193,19 @@ int startWithTilde(char *);
 					//builtin
 					bioutf = 2; //Indicates that there is a outfile redirection
 					biOutfile = $2;
-					printf(">> errout %s\n", $3);
+				//	printf(">> errout %s\n", $3);
 				} 
 
 			|	TWO GT WORD end_char
 				{
 					errToFile = 1;
 					errFile = $3;
-					printf("2>file %s\n", $4);
+				//	printf("2>file %s\n", $4);
 				}
 			|	TWOAMPONE end_char
 				{
 					errToSTDOUT = 1;
-					printf("2>&1 %s\n", $2);
+				//	printf("2>&1 %s\n", $2);
 				}
 			|	end_char	{$$ = $1;}
 			;
@@ -222,7 +222,7 @@ int startWithTilde(char *);
 			|	AMP EOL
 				{
 					//background flag
-					printf("& ");
+				//	printf("& ");
 					$$ = "AMP";
 					amp = 1;
 				}
@@ -259,7 +259,7 @@ int startWithTilde(char *);
 					builtin = 1;
 					bistr = $2;
 					bistr2 = $3;
-					printf("SETENV string TEST: %s", $3);
+				//	printf("SETENV string TEST: %s", $3);
 					YYACCEPT;
 				}
 			|	SETENV WORD env_var end_line_option
@@ -268,7 +268,7 @@ int startWithTilde(char *);
 					builtin = 1;
 					bistr = $2;
 					bistr2 = $3;
-					printf("SETENV string TEST: %s", $3);
+				//	printf("SETENV string TEST: %s", $3);
 					YYACCEPT;
 				}
 			
@@ -328,7 +328,7 @@ int startWithTilde(char *);
 				{
 					bicmd = BYE;
 					builtin = 1;
-					printf("BYE\n");
+				//	printf("BYE\n");
 					YYACCEPT;
 			
 				}
@@ -341,14 +341,14 @@ int startWithTilde(char *);
 				{ 	
 					bicmd = ALIAS;
 					builtin = 1;
-					printf("ALIAS no para\n");
+				//	printf("ALIAS no para\n");
 					YYACCEPT;
 				}
 			|	ALIAS 				
 				{ 	
 					bicmd = ALIAS;
 					builtin = 1;
-					printf("ALIAS no para\n");
+				//	printf("ALIAS no para\n");
 					YYACCEPT;
 				}
 			|	ALIAS WORD STRING EOL
@@ -357,7 +357,7 @@ int startWithTilde(char *);
 					builtin = 1;
 					aliasname = $2;
 					aliastr = $3;
-					printf("ALIASADDSTR %s\n",$3);
+				//	printf("ALIASADDSTR %s\n",$3);
 					YYACCEPT;
 				}
 			|	ALIAS WORD STRING 
@@ -366,7 +366,7 @@ int startWithTilde(char *);
 					builtin = 1;
 					aliasname = $2;
 					aliastr = $3;
-					printf("ALIASADDSTR %s\n no eol",$3);
+				//	printf("ALIASADDSTR %s\n no eol",$3);
 					YYACCEPT;
 				}
 			|	ALIAS WORD WORD EOL			// alias to another alias
@@ -375,7 +375,7 @@ int startWithTilde(char *);
 					builtin = 1;
 					aliasname = $2;
 					aliastr = $3;
-					printf("ALIASADDWORD %s\n",$3);
+				//	printf("ALIASADDWORD %s\n",$3);
 					YYACCEPT;
 				}
 			|	ALIAS WORD WORD 			// alias to another alias
@@ -384,7 +384,7 @@ int startWithTilde(char *);
 					builtin = 1;
 					aliasname = $2;
 					aliastr = $3;
-					printf("ALIASADDWORD %s\n no eol",$3);
+				//	printf("ALIASADDWORD %s\n no eol",$3);
 					YYACCEPT;
 				}
 			|	ALIAS WORD env_var EOL			// alias to another alias
@@ -393,7 +393,7 @@ int startWithTilde(char *);
 					builtin = 1;
 					aliasname = $2;
 					aliastr = $3;
-					printf("ALIASADDWORD %s\n",$3);
+				//	printf("ALIASADDWORD %s\n",$3);
 					YYACCEPT;
 				}
 			|	ALIAS WORD env_var 			// alias to another alias
@@ -402,7 +402,7 @@ int startWithTilde(char *);
 					builtin = 1;
 					aliasname = $2;
 					aliastr = $3;
-					printf("ALIASADDWORD %s\n no eol",$3);
+				//	printf("ALIASADDWORD %s\n no eol",$3);
 					YYACCEPT;
 				}
 			|	UNALIAS WORD EOL
@@ -410,7 +410,7 @@ int startWithTilde(char *);
 					bicmd = UNALIAS;
 					builtin = 1;
 					aliasname = $2;
-					printf("UNALIAS no para\n");
+				//	printf("UNALIAS no para\n");
 					YYACCEPT;
 				}
 			|	UNALIAS WORD 
@@ -418,7 +418,7 @@ int startWithTilde(char *);
 					bicmd = UNALIAS;
 					builtin = 1;
 					aliasname = $2;
-					printf("UNALIAS no para no eol\n");
+				//	printf("UNALIAS no para no eol\n");
 					YYACCEPT;
 				}
 
@@ -506,7 +506,7 @@ int startWithTilde(char *);
 			|	env_var
 				{
 					$$ = $1;
-					printf("cmd is envar: %s\n", $1);
+				//	printf("cmd is envar: %s\n", $1);
 				}
 			 ;
 
@@ -625,7 +625,7 @@ int startWithTilde(char *);
 					//char *temp = strcat($1, " ");
 					//$$ = strcat(temp, $2);
 
-					printf("nonbuiltin w multiple args. envar:%s \n ", $2);
+				//	printf("nonbuiltin w multiple args. envar:%s \n ", $2);
 				}
 
 			|	arguments WORD
@@ -749,14 +749,14 @@ char* removeQuote(char* s)
 	char* temp = malloc(200);
 	int length = strlen(s);
 	
-	printf("buildin old string %s\n", s);
+//	printf("buildin old string %s\n", s);
 
 	int i;
 	for( i = 0; i < length-2; i++)
 		temp[i] = s[i+1];
 	
 
-	printf("nonbuiltin new string %s\n", temp);
+//	printf("nonbuiltin new string %s\n", temp);
 	return temp;
 }
 

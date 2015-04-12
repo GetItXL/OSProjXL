@@ -215,7 +215,7 @@ void recover_from_errors()
 	// To do this: use yylex() directly.
 	printf("recover_from_errors\n");
 
-	printf("I have idea?\n");
+//	printf("I have idea?\n");
 	//yyrestart(stdin);					//restart to stdin !!!
 	//this may create a child process, cannot bye
 	//yylex();
@@ -233,9 +233,9 @@ int understand_errors()
 void processCommand()
 {	
 	//printf("processCommand\n");
-	printf("bicmd: %d\n", bicmd);
+//	printf("bicmd: %d\n", bicmd);
 	//printf("builtin: %d\n", builtin);
-	printf("contains amp?? %d\n",amp);
+//	printf("contains amp?? %d\n",amp);
 
 	if(builtin){
 		int fd;
@@ -291,13 +291,11 @@ void processCommand()
 
 void do_it(){
 	switch(bicmd){
-		printf("bistr is %s\n", bistr); 
 		case CDX :
 			changedir(bistr);
 			break;
 		case CDHOME :
 			gohome();
-			printf("im in CD home~~~\n");
 			break;
 		case PRINTENV :
 			printEnv();
@@ -388,7 +386,7 @@ void execute_it()
 	int numbPip;
 	int temp = numbCmd;
 
-	printf("current cmd is %d, and numbCmd is %d \n",currcmd, numbCmd);
+//	printf("current cmd is %d, and numbCmd is %d \n",currcmd, numbCmd);
 	//for(int i = 0; i < numbCmd; i++)		//for each cmd;
 
 	for(currcmd; currcmd < numbCmd; currcmd++)
@@ -397,20 +395,22 @@ void execute_it()
 
 		if((numbCmd == 1 && currcmd == 0)||(numbCmd == 2 && currcmd == 0))
 		{
-			status = pipe(fd[0]); printf("......pipe is repeat\n");
+			status = pipe(fd[0]); 
+			//printf("......pipe is repeat\n");
 		}
 		else if(currcmd < numbCmd-1)
 		{
-			status = pipe(fd[currcmd]);printf("pipe is repeat %d\n", currcmd);
+			status = pipe(fd[currcmd]);
+			//printf("pipe is repeat %d\n", currcmd);
 		}
 
 		comtab[currcmd].args[0] = comtab[currcmd].comName;
 		
-		printf("...currcmd is %d.set my args[]table, current tabke name is %s \n",currcmd, comtab[currcmd].comName);
+	//	printf("...currcmd is %d.set my args[]table, current tabke name is %s \n",currcmd, comtab[currcmd].comName);
 
 		int pidnumb = pid[currcmd] = fork();
 
-		printf("I'm  on fork # %d\n", pid[currcmd]);
+	//	printf("I'm  on fork # %d\n", pid[currcmd]);
 		switch(pidnumb)
 		{
 			case -1:	printf("....fork error!\n");
@@ -420,10 +420,10 @@ void execute_it()
 
 						break;
 			default:	
-						printf("process #%d is on default\n", pid[currcmd]);
+			//			printf("process #%d is on default\n", pid[currcmd]);
 						if(currcmd!= 0 && numbCmd > 2 && currcmd != numbCmd)
 						{
-							printf("close pipe in the parent loop? %d \n", currcmd);
+			//				printf("close pipe in the parent loop? %d \n", currcmd);
 							if(close(fd[currcmd-1][1]) < 0){printf("error line 2\n");}
 							if(close(fd[currcmd-1][0]) < 0){printf("error ssline 2\n");}
 						}
@@ -439,14 +439,15 @@ If options is WNOHANG, then is it non-blocking
 
 */
 	if(numbCmd != 1 && numbCmd !=2 )
-	{	printf("---close pipe now!!\n");
+	{	
+		//printf("---close pipe now!!\n");
 		
 		for(numbPip = 0; numbPip < numbCmd-1; numbPip++)
 		{
 			close(fd[numbPip][0]); close(fd[numbPip][1]); 
-			printf("close pipe #%d\n",numbPip);
+		//	printf("close pipe #%d\n",numbPip);
 		}	
-		printf("wait for process #%d\n",currcmd);
+	//	printf("wait for process #%d\n",currcmd);
 
 		//waitpid(pid[0], &status, 0);
 		//printf("wait for process 2 #%d\n",currcmd);
@@ -483,7 +484,8 @@ void commandPosition(int cmd)
 	// the pipeline here does not have logic, need fix issue.
 	switch(whichCmd(cmd))
 	{
-		case FIRST:		printf("first command\n");
+		case FIRST:		
+						//printf("first command\n");
 	//	If the parent wants to send data to the child, it should close fd0, and the child should close fd1.
 						// written to fd[1], read from fd[0];
 
@@ -497,7 +499,8 @@ void commandPosition(int cmd)
 						in_redir(cmd);
 						break;
 
-		case LAST:		printf("last command, and the pipe is #%d\n", currcmd);
+		case LAST:		
+						//printf("last command, and the pipe is #%d\n", currcmd);
 	//	If the parent wants to receive data from the child, it should close fd1, and the child should close fd0. 
 						if(numbCmd == 1 )
 						{
@@ -507,7 +510,7 @@ void commandPosition(int cmd)
 						}
 						else
 						{
-							printf("last command, and reading the pipe frpm %d\n", currcmd); 
+						//	printf("last command, and reading the pipe frpm %d\n", currcmd); 
 							if(dup2(fd[currcmd-1][0],STDIN_FILENO) < 0){ printf("error line \n");}
 							
 							if(close(fd[currcmd-1][1]) < 0){printf("error line 2\n");}
@@ -515,8 +518,8 @@ void commandPosition(int cmd)
 					
 						}
 						
-						 printf("arg[0] is %s\n", comtab[cmd].args[0]);
-						 printf("arg[1] is %s\n", comtab[cmd].args[1]);
+					//	 printf("arg[0] is %s\n", comtab[cmd].args[0]);
+					//	 printf("arg[1] is %s\n", comtab[cmd].args[1]);
 
 						 out_redir(cmd);
 
@@ -531,11 +534,12 @@ void commandPosition(int cmd)
 					//	exit(0);
 						break;
 
-		case ONLY_ONE:	printf("only one command\n");
+		case ONLY_ONE:	
+						//printf("only one command\n");
 						in_redir(cmd);
 						out_redir(cmd);
-						printf("arg[0] is %s\n", comtab[cmd].args[0]);
-						printf("arg[1] is %s\n", comtab[cmd].args[1]);
+						//printf("arg[0] is %s\n", comtab[cmd].args[0]);
+						//printf("arg[1] is %s\n", comtab[cmd].args[1]);
 
 
 						if(errToSTDOUT){
@@ -548,7 +552,8 @@ void commandPosition(int cmd)
 						
 						break;
 
-		default:		printf("middle command, and the pipe is #%d\n", currcmd);
+		default:		
+						//printf("middle command, and the pipe is #%d\n", currcmd);
 						// fd[0][0] read			//fd[1][0] write
 						if(dup2(fd[currcmd-1][0],STDIN_FILENO) < 0){printf("midd line 2\n");}
 						if(dup2(fd[currcmd][1],STDOUT_FILENO) < 0){printf("mds line 2\n");}
@@ -570,7 +575,7 @@ void commandPosition(int cmd)
 	 if(envCmd == 1)					//first check if it is an env variable
 	{
 		alProce = 2;
-		printf("assume it is an env variable, %s\n", envValue);
+		//printf("assume it is an env variable, %s\n", envValue);
 		buffer = yy_scan_string(addEOL(envValue));
 		return;
 	}
@@ -590,25 +595,25 @@ void commandPosition(int cmd)
 int executable()
 {
 	// first check if it's an alias
-	printf("unknowStr is %s/n",unknowStr);
+	//printf("unknowStr is %s/n",unknowStr);
 	if(checkExistAlias(unknowStr)!= -1)
 	{
-		printf("in executable() Its alias\n");
+	//	printf("in executable() Its alias\n");
 		builtin = 1;
 		return (OK);	
 	}
 	else 								// check whether it's a system call, but how?
 	{
 		envValue = getenv(unknowStr);
-		printf("value is %s\n", envValue);
+	//	printf("value is %s\n", envValue);
 
 		if(envValue != 0)
 		{
 			envCmd = 1;
-			printf("alORstr is %d \n", alORstr);
+	//		printf("alORstr is %d \n", alORstr);
 			if(*envValue !='"')
 				alORstr = 1;
-			printf("%s is an envCmd, alORstr is %d \n", unknowStr, alORstr);
+	//		printf("%s is an envCmd, alORstr is %d \n", unknowStr, alORstr);
 			alProce = 2;
 			return (OK);
 		}	
@@ -619,7 +624,7 @@ int executable()
 			return ERROR;
 		}
 		else{
-			printf("cmd found!\n");
+	//		printf("cmd found!\n");
 			return (OK);
 		}
 	}
@@ -636,7 +641,7 @@ void doCMD(int cmd)
 			
 			char *temp = noquoto(aliastr);
 
-			printf("no quoto alias value is  %s\n",temp );
+	//		printf("no quoto alias value is  %s\n",temp );
 			buffer = yy_scan_string(temp);
 
 			return;
@@ -645,15 +650,15 @@ void doCMD(int cmd)
 		{
 			alProce = 2;
 			
-			printf("envCmd is a string \n" );
+			//printf("envCmd is a string \n" );
 			char *temp = noquoto(envValue);
 			buffer = yy_scan_string(temp);
-	
+		
 			return;
 		}	//printf("that is not alias\n");	
 		else													/* other command */
 		{
-			printf("print name is %s, and cmd is %d\n",comtab[cmd].comName,cmd);
+	//		printf("print name is %s, and cmd is %d\n",comtab[cmd].comName,cmd);
 			if( execvp(comtab[cmd].comName, comtab[cmd].args) < 0 ){
 				printf("error executing %s, and %s\n", comtab[cmd].comName, strerror(errno));
 			}
@@ -677,14 +682,14 @@ int whichCmd(cmd)
 void err_to_stdout(){
 
 	//Whatever in STDOUT now, put it in STDERR
-	printf("Redirect err to current stdout\n");
+//	printf("Redirect err to current stdout\n");
 	int currentSTDOUT = dup(STDOUT);
 	dup2(currentSTDOUT, STDERR);
 	close(currentSTDOUT);
 }
 
 void err_to_file(){
-	printf("Redirect err to file\n");
+//	printf("Redirect err to file\n");
 	dup2(errfd, STDERR);
 	close(errfd);
 }
@@ -779,7 +784,7 @@ char* noquoto(char* s)
 	{
 		char* str1 = malloc(length);
 		char *str2 = malloc(length);
-		printf("length is %d\n", length);
+		//printf("length is %d\n", length);
 		int i, j = 0;
 		int stop = 0;
 		if(alProce == 2)
@@ -791,7 +796,7 @@ char* noquoto(char* s)
 				if(stop == 1)
 				{
 					str2[j] = s[i+1];
-					printf("str %c,",str2[j]);
+		//			printf("str %c,",str2[j]);
 					j++;
 				}	
 				else
@@ -800,16 +805,16 @@ char* noquoto(char* s)
 				{
 					strcpy(str1,temp);
 					strcat(str1, "| ");
-					printf("strcmd is %s\n", str1);
+		//			printf("strcmd is %s\n", str1);
 					stop = 1;
 				}
 			}
-			printf("strcmd2 is %s\n", str2);
+		//	printf("strcmd2 is %s\n", str2);
 			//strncat(str1, str2, length);
 			//strncpy(temp, str1, length);
 			strncpy(temp, str1, sizeof(str1));
 			strcat(temp, str2);
-			printf("temp final value is %s\n", temp);
+		//	printf("temp final value is %s\n", temp);
 		}
 		else
 		{
@@ -823,7 +828,7 @@ char* noquoto(char* s)
 		strncpy(temp, s, length);
 
 	strcat(temp, "\n");			// if there is a bug need to check here.
-	printf("new string is %s\n", temp);
+//	printf("new string is %s\n", temp);
 	return temp;
 }
 
@@ -834,7 +839,7 @@ char* addEOL(char* s)
 	int length = strlen(s);
 	strncpy(temp, s, length);
 	strcat(temp, "\n");			// if there is a bug need to check here.
-	printf("new addEOL string %s\n", temp);
+//	printf("new addEOL string %s\n", temp);
 
 	return temp;
 }
@@ -851,7 +856,7 @@ int checkSystemCall(){
 
 	char *pathToken;
 	pathToken = strtok(path, ":"); 
-	printf("pathtoken: %s\n", pathToken);
+//	printf("pathtoken: %s\n", pathToken);
 
 
 	char *fullpath = malloc(sizeof(pathToken) + 50);
@@ -859,11 +864,11 @@ int checkSystemCall(){
 	strcat(fullpath, "/");
 	strcat(fullpath, comtab[currcmd].comName);
 
-	printf("fullpath: %s\n", fullpath);
+//	printf("fullpath: %s\n", fullpath);
 
 	int ac;
 	ac = access(fullpath, X_OK);
-	printf("access result: %d\n", ac);
+//	printf("access result: %d\n", ac);
 	if(ac == 0)
 		return 1;
 	
@@ -881,11 +886,11 @@ int checkSystemCall(){
 		strcpy(fullpath, pathToken);
 		strcat(fullpath, "/");
 		strcat(fullpath, comtab[currcmd].comName);
-		printf("fullpath: %s\n", fullpath);
+//		printf("fullpath: %s\n", fullpath);
 		//free(fullpath);
 		
 		ac = access(fullpath, X_OK);
-		printf("access result: %d\n", ac);
+//		printf("access result: %d\n", ac);
 		if(ac == 0)
 			return 1;
 
@@ -897,7 +902,7 @@ int checkSystemCall(){
 
 	char *homeToken;
 	homeToken = strtok(home, ":"); 
-	printf("homeToken: %s\n", homeToken);
+//	printf("homeToken: %s\n", homeToken);
 
 
 	char *fullhpath = malloc(sizeof(homeToken) + 50);
@@ -906,11 +911,11 @@ int checkSystemCall(){
 	strcat(fullhpath, "/");
 	strcat(fullhpath, comtab[currcmd].comName);
 
-	printf("fullhpath: %s\n", fullhpath);
+//	printf("fullhpath: %s\n", fullhpath);
 
 	int ach;
 	ach = access(fullhpath, X_OK);
-	printf("access result: %d\n", ach);
+//	printf("access result: %d\n", ach);
 	if(ach == 0)
 		return 1;
 
@@ -928,19 +933,16 @@ int checkSystemCall(){
 		strcpy(fullhpath, homeToken);
 		strcat(fullhpath, "/");
 		strcat(fullhpath, comtab[currcmd].comName);
-		printf("fullhpath: %s\n", fullhpath);
+	//	printf("fullhpath: %s\n", fullhpath);
 		//free(fullpath);
 		
 		ach = access(fullhpath, X_OK);
-		printf("access result: %d\n", ac);
+	//	printf("access result: %d\n", ac);
 		if(ach == 0)
 			return 1;
-
-
 		fullpath = NULL;
 
 	}
-
 
 	//free(fullpath);
 	return 0;

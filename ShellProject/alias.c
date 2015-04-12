@@ -50,8 +50,8 @@ int checkAliasLoop(char* name, char *str, int refalias)
 	
 			checkexit = root->next;
 			checkexit->x = str;
-			printf("insert root %s in the linkedlist!\n", root->x);		// root is the value of the alias 
-			printf("insert value %s in the linkedlist!\n", checkexit->x);
+		//	printf("insert root %s in the linkedlist!\n", root->x);		// root is the value of the alias 
+		//	printf("insert value %s in the linkedlist!\n", checkexit->x);
 
 			checkexit->next = malloc( sizeof(struct node) );
 			checkexit = checkexit->next;
@@ -71,7 +71,7 @@ int checkAliasLoop(char* name, char *str, int refalias)
 					checkexit->next = malloc( sizeof(struct node) ); 
 
 					
-					printf("check is  %s in the linkedlist, and str is %s!\n",checkexit->x, str);
+				//	printf("check is  %s in the linkedlist, and str is %s!\n",checkexit->x, str);
 					temp = checkExistAlias(aliastab[temp].alstr);
 
 					if(strcmp(checkexit->x ,str)== 0)
@@ -80,10 +80,10 @@ int checkAliasLoop(char* name, char *str, int refalias)
 						return ERROR;
 					checkexit = checkexit->next;
 				}	
-				printf("temp is %d , and temp is  %s in the linkedlist!\n", temp, aliastab[temp].alstr);
+			//	printf("temp is %d , and temp is  %s in the linkedlist!\n", temp, aliastab[temp].alstr);
 					
 			}
-			printf("check if there is duplicate value\n");
+		//	printf("check if there is duplicate value\n");
 			checkexit = root;
 			while(checkexit!=NULL)
 			{
@@ -91,7 +91,7 @@ int checkAliasLoop(char* name, char *str, int refalias)
 			 	free(root);
 			 	root = checkexit;
 			}	
-				printf("finished checking alias table!, nothing error\n");
+		//		printf("finished checking alias table!, nothing error\n");
 				return OK;
 	  }
 	  else
@@ -104,7 +104,7 @@ void addAlias(char* name, char* str, int refalias)
 {
 	//printf("name is %s, string is %s.\n", name, str);
 	int aliasIndex = checkExistAlias(name);
-	printf("aliasIndex is %d\n", aliasIndex);
+//	printf("aliasIndex is %d\n", aliasIndex);
 
 	if(checkAliasLoop(name, str, refalias) == 0)
 	{
