@@ -41,6 +41,10 @@ char *biInfile = '\0';
 int alProce;	
 int   fd[MAXCMD][2]; 			// anything written to fd[1] can be read from fd[0]
 
+int errToSTDOUT = 0;
+int errToFile = 0;
+char* errFile = '\0';
+
 
 //---- test ---
 COMMAND comtab[MAXCMD];
@@ -58,9 +62,10 @@ char* envValue;
 //Used to save STDOUT so that when the io redirection cmd is finished, we can direct the output back to STDOUT
 int saveSTDOUT;
 int saveSTDIN;
+int saveSTDERR;
 
 //Don't need to reset them for the next cmd right?
-int newOutfd, newInfd;
+int newOutfd, newInfd, errfd;
 //Used to store fd of in and out file
 
 
@@ -86,6 +91,7 @@ int main(void)
 		
 		/** To restore output stream to STDOUT after each cmd*/
 		saveSTDOUT = dup(STDOUT);
+		saveSTDERR = dup(STDERR);
 
 		CMD = getCommand();
 		yy_delete_buffer(buffer);	
@@ -103,7 +109,10 @@ int main(void)
 		/** To restore output stream to STDOUT after each cmd*/
 		dup2(saveSTDOUT, STDOUT);
 		close(saveSTDOUT);
-		//Need to do this to STDIN as well
+		//Need to do this to STDIN as well?? do I?
+		//Did this for builtin cmd. But maybe don't need it for nonbuiltin
+		dup2(saveSTDERR, STDERR);
+		close(saveSTDERR);
 
 	}
 	return 0;
@@ -122,6 +131,9 @@ void shell_init()
 	numbCmd = 0;			// numb of cmd in each command
 	amp = 0;
 	envCmd = 0;
+	errToSTDOUT = 0;
+	errToFile = 0;
+	errFile = '\0';
 }
 
 void printPrompt(){	 printf("%s :> ",getcwd(NULL, 0));}
@@ -187,6 +199,9 @@ void init_scanner_and_parser(){
 	currcmd = 0;
 	currarg = 1; //Do this here or in parser.y. Beacuse the first arg is reserved for the cmd
 	amp = 0;
+	errToSTDOUT = 0;
+	errToFile = 0;
+	errFile = '\0';
 }
 
 
@@ -497,6 +512,14 @@ void commandPosition(int cmd)
 						 printf("arg[1] is %s\n", comtab[cmd].args[1]);
 
 						 out_redir(cmd);
+
+						 if(errToSTDOUT){
+						 	err_to_stdout();
+						 }
+						 else if(errToFile){
+						 	err_to_file();
+						 }
+
 			
 					//	exit(0);
 						break;
@@ -506,6 +529,15 @@ void commandPosition(int cmd)
 						out_redir(cmd);
 						printf("arg[0] is %s\n", comtab[cmd].args[0]);
 						printf("arg[1] is %s\n", comtab[cmd].args[1]);
+
+
+						if(errToSTDOUT){
+						 	err_to_stdout();
+						 }
+						 else if(errToFile){
+						 	err_to_file();
+						 }
+						//execvp(comtab[cmd].comName, comtab[cmd].args);
 						
 						break;
 
@@ -635,6 +667,21 @@ int whichCmd(cmd)
 		return -1;
 }
 
+void err_to_stdout(){
+
+	//Whatever in STDOUT now, put it in STDERR
+	printf("Redirect err to current stdout\n");
+	int currentSTDOUT = dup(STDOUT);
+	dup2(currentSTDOUT, STDERR);
+	close(currentSTDOUT);
+}
+
+void err_to_file(){
+	printf("Redirect err to file\n");
+	dup2(errfd, STDERR);
+	close(errfd);
+}
+
 void in_redir(cmd)
 {
 	//If user specified input redirection
@@ -668,6 +715,7 @@ void out_redir(cmd)
 	
 }
 
+
 int check_in_file()
 {
 	//Only check file if "<" appears in the cmd
@@ -700,6 +748,15 @@ int check_out_file()
 		if(newOutfd < 0)
 			return ERROR;
 	}
+
+	//Checks error redirect file
+	if(errToFile){
+		if((errfd = open(errFile, O_CREAT | O_TRUNC | O_WRONLY, 0644)) < 0){
+			return ERROR;
+		}
+	}
+
+
 	return 0;
 }
 

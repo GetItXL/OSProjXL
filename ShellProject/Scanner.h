@@ -111,7 +111,14 @@ void processAlias(char*);					//check if input is an alias
 //int alias_input(char*);
 //int helper(char*, int, int);
 
-// -------------------------------------
+// ---------------------IO---------
+void err_to_stdout();
+void err_to_file();
+
+
+// --------------------------------
+
+
 
 extern COMMAND comtab[MAXCMD];
 extern int yylex();
@@ -131,6 +138,11 @@ extern char *biInfile;
 
 extern int envCmd;
 extern char* envValue;
+
+// --------------- IO Redirect ----------------
+extern int errToSTDOUT;
+extern int errToFile;
+extern char *errFile;
 
 // ---------------- for pipline ---------------
 

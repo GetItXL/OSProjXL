@@ -12,8 +12,9 @@ int yylineno;
 int yydebug;
 //currcmd = 0;
 
-
+char* removeQuote(char*);
 int isWildcardPattern(char*);
+int startWithTilde(char *);
 
 %}
 
@@ -24,7 +25,7 @@ int isWildcardPattern(char*);
 
 /* default yylval type is int (num) */
 %token <num> BYE SETENV PRINTENV CD UNSETENV ALIAS UNALIAS GT LT PIPE AMP DOL LBRAC RBRAC
-%token <string> WORD METACHAR STRING EOL GTGT TWO AMPONE TILDE
+%token <string> WORD METACHAR STRING EOL GTGT TWO TWOAMPONE TILDE
 %type <string> cmd_name other_cmd pipe_cmd arguments builtin_cmd end_char end_line_option env_var
 
 
@@ -116,10 +117,12 @@ int isWildcardPattern(char*);
 					comtab[numbCmd-1].outfile = $4;
 
 					//Need to handle 2>file
+					errToFile = 1;
+					errFile = $7;
 
 					printf("< infile > outfile 2>file %s\n", $8);
 				}
-			|	LT WORD GT WORD TWO GT AMPONE end_char
+			|	LT WORD GT WORD TWOAMPONE end_char
 				{
 					//builtin
 					biinf = 1;
@@ -134,8 +137,9 @@ int isWildcardPattern(char*);
 					comtab[numbCmd-1].outfile = $4;
 
 					//Need to handle 2>&1
+					errToSTDOUT = 1;
 
-					printf("< infile > outfile 2>&1 %s\n", $8);
+					printf("< infile > outfile 2>&1 %s\n", $6);
 				}
 			|	GT WORD end_char
 				{
@@ -160,10 +164,12 @@ int isWildcardPattern(char*);
 					biOutfile = $2;
 
 					//Need to handle 2>file
+					errToFile = 1;
+					errFile = $5;
 
 					printf("> outfile 2>file %s\n", $6);
 				}
-			|	GT WORD TWO GT AMPONE end_char
+			|	GT WORD TWOAMPONE end_char
 				{
 					//nonbuiltin
 					comtab[numbCmd-1].outfd = 1;
@@ -174,8 +180,9 @@ int isWildcardPattern(char*);
 					biOutfile = $2;
 
 					//Need to handle 2>&1
+					errToSTDOUT = 1;
 
-					printf("> outfile 2>&1 %s\n", $6);
+					printf("> outfile 2>&1 %s\n", $4);
 				}
 			|	GTGT WORD end_char
 				{
@@ -191,11 +198,14 @@ int isWildcardPattern(char*);
 
 			|	TWO GT WORD end_char
 				{
+					errToFile = 1;
+					errFile = $3;
 					printf("2>file %s\n", $4);
 				}
-			|	TWO GT AMPONE end_char
+			|	TWOAMPONE end_char
 				{
-					printf("2>&1 %s\n", $4);
+					errToSTDOUT = 1;
+					printf("2>&1 %s\n", $2);
 				}
 			|	end_char	{$$ = $1;}
 			;
@@ -292,7 +302,24 @@ int isWildcardPattern(char*);
 				{
 					bicmd = CDX;
 					builtin = 1;
-					bistr = $2;
+					
+
+					//wildcard matching: If more than one directory returned, cd to the first directory
+					if(isWildcardPattern($2) || startWithTilde($2)){
+						glob_t result;
+						
+						//NOSORT = sorted alphabetical order?
+						if(glob($2, GLOB_NOSORT | GLOB_NOCHECK | GLOB_TILDE, NULL, &result) == 0){
+							if( result.gl_pathc > 0 )
+								bistr = strdup(result.gl_pathv[0]);
+   								globfree( &result );
+							}
+					}
+					else{
+						bistr = $2;
+					}
+
+
 
 					YYACCEPT;
 				}	
@@ -491,11 +518,11 @@ int isWildcardPattern(char*);
 					
 					currarg = 1; //first element in arg[] is the cmd 
 
-					if(isWildcardPattern($1)){
+					if(isWildcardPattern($1) || startWithTilde($1)){
 						glob_t result;
 						
 						//NOSORT = sorted alphabetical order?
-						if(glob($1, GLOB_NOSORT | GLOB_NOCHECK, NULL, &result) == 0){
+						if(glob($1, GLOB_NOSORT | GLOB_NOCHECK | GLOB_TILDE, NULL, &result) == 0){
 							int i; //gl.pathc contains num of matched files
 							for(i = 0; i < result.gl_pathc; i++){
 								comtab[numbCmd].args[currarg] = strdup(result.gl_pathv[i]);
@@ -526,6 +553,8 @@ int isWildcardPattern(char*);
 			|	STRING 				
 				{
 
+					//nonbuiltin cmd string arg remove quote
+					$1 = removeQuote($1);
 
 					currarg = 1; //first element in arg[] is the cmd 
 
@@ -602,11 +631,11 @@ int isWildcardPattern(char*);
 			|	arguments WORD
 				{
 					
-					if(isWildcardPattern($2)){
+					if(isWildcardPattern($2) || startWithTilde($2)){
 						glob_t result;
 						
 						//NOSORT = sorted alphabetical order?
-						if(glob($2, GLOB_NOSORT | GLOB_NOCHECK, NULL, &result) == 0){
+						if(glob($2, GLOB_NOSORT | GLOB_NOCHECK | GLOB_TILDE, NULL, &result) == 0){
 							int i; //gl.pathc contains num of matched files
 							for(i = 0; i < result.gl_pathc; i++){
 								comtab[numbCmd].args[currarg] = strdup(result.gl_pathv[i]);
@@ -635,6 +664,11 @@ int isWildcardPattern(char*);
 
 			|	arguments STRING
 				{
+					
+					//nonbuiltin string remove quote
+					$2 = removeQuote($2);
+
+
 					if(isWildcardPattern($2)){
 						glob_t result;
 						
@@ -694,10 +728,35 @@ int isWildcardPattern(char *arg){
 	return 0; //no * or ? found
 }
 
+//Check if first char is tilde
+int startWithTilde(char *arg){
+	if(arg[0] == '~')
+		return 1;
+
+	return 0; //return 0 is not starting with ~
+}
+
 
 
 void yyerror (char *s) 
 {
 	fprintf(stderr, "line %d: %s\n", yylineno, s);
 } 
+
+
+char* removeQuote(char* s)
+{
+	char* temp = malloc(200);
+	int length = strlen(s);
+	
+	printf("buildin old string %s\n", s);
+
+	int i;
+	for( i = 0; i < length-2; i++)
+		temp[i] = s[i+1];
+	
+
+	printf("nonbuiltin new string %s\n", temp);
+	return temp;
+}
 

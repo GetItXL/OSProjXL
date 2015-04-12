@@ -34,7 +34,7 @@
 "}"								{	return RBRAC;}
 ">>"							{	return GTGT;}
 "2"								{	return TWO;}
-"&1"							{	return AMPONE;}
+"2>&1"							{	return TWOAMPONE;}
 "~"								{	return TILDE;}
 
 [-a-zA-Z0-9./:~*?_]+				{	yylval.string = strdup(yytext);		return WORD;	}
