@@ -83,21 +83,14 @@ int checkAliasLoop(char* name, char *str, int refalias)
 				printf("temp is %d , and temp is  %s in the linkedlist!\n", temp, aliastab[temp].alstr);
 					
 			}
-		
-
 			printf("check if there is duplicate value\n");
 			checkexit = root;
 			while(checkexit!=NULL)
 			{
-				//and compare the vallue is the same as the name of not
-				// if(strcmp(checkexit->x ,str) == 0)
-				// 	return ERROR;
 				checkexit = root->next;
 			 	free(root);
 			 	root = checkexit;
 			}	
-
-			
 				printf("finished checking alias table!, nothing error\n");
 				return OK;
 	  }
@@ -115,8 +108,6 @@ void addAlias(char* name, char* str, int refalias)
 
 	if(checkAliasLoop(name, str, refalias) == 0)
 	{
-		//printf("checkAliasLoop");
-		//temp = noquoto(str);
 		if(aliasIndex == (-1))			//if does not exist alias has same name
 		{
 			//printf("aliasNumber is %d\n", aliasNumb);
@@ -173,7 +164,6 @@ void showAlias()
 
 void processAlias(char* unknowStr)
 {
-	
 	int i = checkExistAlias(unknowStr);
 	if(i > -1)
 	{	

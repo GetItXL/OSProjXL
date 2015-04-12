@@ -252,6 +252,15 @@ int isWildcardPattern(char*);
 					printf("SETENV string TEST: %s", $3);
 					YYACCEPT;
 				}
+			|	SETENV WORD env_var end_line_option
+				{
+					bicmd = SETENV;
+					builtin = 1;
+					bistr = $2;
+					bistr2 = $3;
+					printf("SETENV string TEST: %s", $3);
+					YYACCEPT;
+				}
 			
 			|	UNSETENV WORD end_line_option
 				{
@@ -343,6 +352,24 @@ int isWildcardPattern(char*);
 					YYACCEPT;
 				}
 			|	ALIAS WORD WORD 			// alias to another alias
+				{
+					bicmd = ALIASADD;
+					builtin = 1;
+					aliasname = $2;
+					aliastr = $3;
+					printf("ALIASADDWORD %s\n no eol",$3);
+					YYACCEPT;
+				}
+			|	ALIAS WORD env_var EOL			// alias to another alias
+				{
+					bicmd = ALIASADD;
+					builtin = 1;
+					aliasname = $2;
+					aliastr = $3;
+					printf("ALIASADDWORD %s\n",$3);
+					YYACCEPT;
+				}
+			|	ALIAS WORD env_var 			// alias to another alias
 				{
 					bicmd = ALIASADD;
 					builtin = 1;
@@ -486,8 +513,6 @@ int isWildcardPattern(char*);
 						comtab[numbCmd].countArgs++;
 					}
 
-
-					
 					
 					//printf("arge  lala\n");
 

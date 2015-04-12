@@ -269,11 +269,9 @@ void processCommand()
 			dup2(saveSTDIN, STDIN);
 			close(saveSTDIN);
 		}
-
-
 	}
 	else
-	{		execute_it();	}
+	{	execute_it();	}
 }
 
 void do_it(){
@@ -455,42 +453,8 @@ If options is WNOHANG, then is it non-blocking
 	  
 					
 }
+ 
 
-int executable()
-{
-	// first check if it's an alias
-	printf("unknowStr is %s/n",unknowStr);
-	if(checkExistAlias(unknowStr)!= -1)
-	{
-		printf("in executable() Its alias\n");
-		builtin = 1;
-		return (OK);	
-	}
-	else 								// check whether it's a system call, but how?
-	{
-		envValue = getenv(unknowStr);
-		printf("value is %s\n", envValue);
-
-		if(envValue != 0)
-		{
-			envCmd = 1;
-			printf("%s is an envCmd\n", unknowStr);
-			alProce = 1;
-			return (OK);
-		}	
-
-		//Check if cmd exists
-
-		if(checkSystemCall() == 0){
-			return ERROR;
-		}
-		else{
-			printf("cmd found!\n");
-			return (OK);
-		}
-	}
-			
-} 
 
 void commandPosition(int cmd)
 {
@@ -541,10 +505,8 @@ void commandPosition(int cmd)
 						in_redir(cmd);
 						out_redir(cmd);
 						printf("arg[0] is %s\n", comtab[cmd].args[0]);
+						printf("arg[1] is %s\n", comtab[cmd].args[1]);
 						
-						//execvp(comtab[cmd].comName, comtab[cmd].args);
-						
-
 						break;
 
 		default:		printf("middle command, and the pipe is #%d\n", currcmd);
@@ -566,7 +528,7 @@ void commandPosition(int cmd)
 	 * Check Command Accessability and Executability
 	*/
 
-	 if(envCmd == 1)					//assume it is an env variable
+	 if(envCmd == 1)					//first check if it is an env variable
 	{
 		alProce = 1;
 		printf("assume it is an env variable, %s\n", envValue);
@@ -581,13 +543,49 @@ void commandPosition(int cmd)
 		return;
 	}
 	else
-	{
 		doCMD(cmd);
-	}
-	//numbCmd = 0;		//after the pipe, reset to 0;
+		//after the pipe, reset to 0;
 	
 }
 
+int executable()
+{
+	// first check if it's an alias
+	printf("unknowStr is %s/n",unknowStr);
+	if(checkExistAlias(unknowStr)!= -1)
+	{
+		printf("in executable() Its alias\n");
+		builtin = 1;
+		return (OK);	
+	}
+	else 								// check whether it's a system call, but how?
+	{
+		envValue = getenv(unknowStr);
+		printf("value is %s\n", envValue);
+
+		if(envValue != 0)
+		{
+			envCmd = 1;
+			printf("alORstr is %d \n", alORstr);
+			if(*envValue !='"')
+				alORstr = 1;
+			printf("%s is an envCmd, alORstr is %d \n", unknowStr, alORstr);
+			alProce = 1;
+			return (OK);
+		}	
+
+		//Check if cmd exists
+
+		if(checkSystemCall() == 0){
+			return ERROR;
+		}
+		else{
+			printf("cmd found!\n");
+			return (OK);
+		}
+	}
+			
+} 
 
 void doCMD(int cmd)
 {
@@ -599,24 +597,19 @@ void doCMD(int cmd)
 			
 			char *temp = noquoto(aliastr);
 
-			if(!alORstr)										// if alias is a string
-			{
-				printf("is string %s\n",temp );
-				buffer = yy_scan_string(temp);
-			}
-			else
-			{
-				printf("is alias %s\n",temp );
-				buffer = yy_scan_string(temp);
-			}
-			free(temp);
+			printf("no quoto alias value is  %s\n",temp );
+			buffer = yy_scan_string(temp);
+
 			return;
 		}
 		else if(envCmd == 1)									/*  check if it is an enviroment vairable */
 		{
 			alProce = 1;
-			printf("assume it is an env variable, %s\n", envValue);
-			buffer = yy_scan_string(addEOL(envValue));
+			
+			printf("envCmd is a string \n" );
+			char *temp = noquoto(envValue);
+			buffer = yy_scan_string(temp);
+	
 			return;
 		}	//printf("that is not alias\n");	
 		else													/* other command */
@@ -628,6 +621,7 @@ void doCMD(int cmd)
 			exit(0);	
 		}
 }
+
 
 int whichCmd(cmd)
 {
@@ -711,7 +705,10 @@ int check_out_file()
 
 char* noquoto(char* s)
 {
-	char* temp = malloc(100);
+	char* temp = malloc(sizeof(s));
+	if(envCmd != 1)
+		temp = malloc(100);
+
 	int length = strlen(s);
 	
 	if(!alORstr)
@@ -725,9 +722,12 @@ char* noquoto(char* s)
 		strncpy(temp, s, length);
 
 	strcat(temp, "\n");			// if there is a bug need to check here.
-	printf("new string %s\n", temp);
-	return temp;
+	printf("new string is %s\n", temp);
+	char* some = temp;
+	free(temp);
+	return some;
 }
+
 
 char* addEOL(char* s)
 {
