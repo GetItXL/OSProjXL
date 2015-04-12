@@ -769,26 +769,61 @@ int check_out_file()
 
 char* noquoto(char* s)
 {
-	char* temp = malloc(sizeof(s));
-	if(envCmd != 1)
-		temp = malloc(100);
+	//char* temp = malloc(sizeof(s));
+	//if(envCmd != 1)
+	char* temp = malloc(100);
 
 	int length = strlen(s);
 	
 	if(!alORstr)
 	{
+		char* str1 = malloc(length);
+		char *str2 = malloc(length);
 		printf("length is %d\n", length);
-		int i;
-		for( i = 0; i < length-2; i++)
-			temp[i] = s[i+1];
+		int i, j = 0;
+		int stop = 0;
+		if(alProce == 2)
+		{
+			// char* str1 = malloc(100);
+			// char *str2 = malloc(100);
+			for( i = 0; i < length-2; i++)
+			{
+				if(stop == 1)
+				{
+					str2[j] = s[i+1];
+					printf("str %c,",str2[j]);
+					j++;
+				}	
+				else
+					temp[i] = s[i+1];
+				if(temp[i] == ' ')
+				{
+					strcpy(str1,temp);
+					strcat(str1, "| ");
+					printf("strcmd is %s\n", str1);
+					stop = 1;
+				}
+			}
+			printf("strcmd2 is %s\n", str2);
+			//strncat(str1, str2, length);
+			//strncpy(temp, str1, length);
+			strncpy(temp, str1, sizeof(str1));
+			strcat(temp, str2);
+			printf("temp final value is %s\n", temp);
+		}
+		else
+		{
+			for( i = 0; i < length-2; i++)
+				temp[i] = s[i+1];
+		}	
+		free(str1);
+		free(str2);
 	}
 	else
 		strncpy(temp, s, length);
 
 	strcat(temp, "\n");			// if there is a bug need to check here.
 	printf("new string is %s\n", temp);
-	// char* some = temp;
-	// free(temp);
 	return temp;
 }
 

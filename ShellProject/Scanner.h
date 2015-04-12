@@ -138,7 +138,6 @@ extern char *biInfile;
 
 extern int envCmd;
 extern char* envValue;
-
 // --------------- IO Redirect ----------------
 extern int errToSTDOUT;
 extern int errToFile;
