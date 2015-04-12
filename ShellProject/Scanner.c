@@ -92,9 +92,13 @@ int main(void)
 		/** To restore output stream to STDOUT after each cmd*/
 		saveSTDOUT = dup(STDOUT);
 		saveSTDERR = dup(STDERR);
+		
 
 		CMD = getCommand();
-		yy_delete_buffer(buffer);	
+	/* i need to put here for pipeline, but cannot be use for the parent com */
+		printf("envCmd is %d, and alProce is %d",envCmd, alProce);
+		if(alProce == 2)
+			yy_delete_buffer(buffer);	
 		switch(CMD)		//check if its a excutible command that follows all the rules.
 		{
 			case ERROR: 	recover_from_errors();
@@ -218,7 +222,7 @@ void recover_from_errors()
 	printf("I have idea?\n");
 	//yyrestart(stdin);					//restart to stdin !!!
 	//this may create a child process, cannot bye
-	//yylex();
+
 }
 
 int understand_errors()
@@ -329,7 +333,10 @@ void do_it(){
 			printf("unexpected error!");
 	}
 	if(alProce==1)
+	{
 		alProce=0;
+		yyrestart(stdin);
+	}
 }
 
 
@@ -344,11 +351,8 @@ void changedir(char *s){
 }
 
 void gohome(){
-	//chdir(getenv("HOME"));
-	char* temp = "HOME";
-	char* value = getenv(temp);
-	printf("gohome here is %s\n",value);
-	chdir(value);
+	chdir(getenv("HOME"));
+	// char* temp = "HOME";
 }
 
 void printEnv(){
@@ -363,6 +367,8 @@ void execute_it()
 {
 	if(alProce==1)			// extra command
 		alProce=0;
+
+
 	// Handle  command execution, pipelining, i/o redirection, and background processing. 
 	// Utilize a command table whose components are plugged in during parsing by yacc. 
 
@@ -379,6 +385,18 @@ void execute_it()
 
 	//Build up the pipeline (create and set up pipe end points (using pipe, dup) 
 	//Process background
+
+	/* if it's relate to builtin command, do not use fork() */
+
+	if(checkExistAlias(unknowStr)!= -1)
+	{
+		printf("in in execute Its alias\n");
+		builtin = 1;
+//		doCMD(1);
+//		return;	
+	}
+
+	/* --------------------------------------------------- */
 
 	int status;
 	int numbPip;
@@ -404,7 +422,14 @@ void execute_it()
 		
 		printf("...currcmd is %d.set my args[]table, current tabke name is %s \n",currcmd, comtab[currcmd].comName);
 
-		int pidnumb = pid[currcmd] = fork();
+		int pidnumb;
+		/* set up for non-builtin command */
+
+		if(builtin)
+			pidnumb = 0;
+		else
+		 	pidnumb = pid[currcmd] = fork();
+		 /* ----------------------------- */
 
 		printf("I'm  on fork # %d\n", pid[currcmd]);
 		switch(pidnumb)
@@ -434,6 +459,9 @@ If options is 0, then it is blocking
 If options is WNOHANG, then is it non-blocking
 
 */
+
+
+
 	if(numbCmd != 1 && numbCmd !=2 )
 	{	printf("---close pipe now!!\n");
 		
@@ -455,10 +483,20 @@ If options is WNOHANG, then is it non-blocking
 		{
 			waitpid(pid[currcmd-1], &status, WNOHANG);
 		}
-	 }
-	 else
-	 {
+	}
+	else
+	{
+
 	 	close(fd[0][0]); close(fd[0][1]); 
+
+	 	/* if it's relate to builtin command, do not wait! */
+
+	 	if(builtin)
+	 	{
+	 		printf("! builtin command don't waid.\n" );
+	 		return;
+	 	}
+
 	 	if(amp == 0)	
 	 		waitpid(pid[currcmd-1], &status, 0);
 	 	else
@@ -467,7 +505,7 @@ If options is WNOHANG, then is it non-blocking
 	 		printf("run in the background.\n" );
 	 	}
 	 	
-	 }
+	}
 	  
 					
 }
@@ -565,7 +603,7 @@ void commandPosition(int cmd)
 
 	 if(envCmd == 1)					//first check if it is an env variable
 	{
-		alProce = 1;
+		alProce = 2;
 		printf("assume it is an env variable, %s\n", envValue);
 		buffer = yy_scan_string(addEOL(envValue));
 		return;
@@ -590,6 +628,7 @@ int executable()
 	if(checkExistAlias(unknowStr)!= -1)
 	{
 		printf("in executable() Its alias\n");
+		buffer = yy_scan_string(addEOL(unknowStr));
 		builtin = 1;
 		return (OK);	
 	}
@@ -605,7 +644,7 @@ int executable()
 			if(*envValue !='"')
 				alORstr = 1;
 			printf("%s is an envCmd, alORstr is %d \n", unknowStr, alORstr);
-			alProce = 1;
+			alProce = 2;
 			return (OK);
 		}	
 
@@ -639,7 +678,7 @@ void doCMD(int cmd)
 		}
 		else if(envCmd == 1)									/*  check if it is an enviroment vairable */
 		{
-			alProce = 1;
+			alProce = 2;
 			
 			printf("envCmd is a string \n" );
 			char *temp = noquoto(envValue);
