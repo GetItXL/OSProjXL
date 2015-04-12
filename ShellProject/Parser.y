@@ -11,6 +11,10 @@ void yyerror (char *s);
 int yylineno;
 int yydebug;
 //currcmd = 0;
+
+
+int isWildcardPattern(char*);
+
 %}
 
 %union {
@@ -460,10 +464,34 @@ int yydebug;
 	arguments
 			:	WORD 				
 				{
+					
 					currarg = 1; //first element in arg[] is the cmd 
-					comtab[numbCmd].args[currarg] = $1;
-					currarg++;
-					comtab[numbCmd].countArgs++;
+
+					if(isWildcardPattern($1)){
+						glob_t result;
+						
+						//NOSORT = sorted alphabetical order?
+						if(glob($1, GLOB_NOSORT | GLOB_NOCHECK, NULL, &result) == 0){
+							int i; //gl.pathc contains num of matched files
+							for(i = 0; i < result.gl_pathc; i++){
+								comtab[numbCmd].args[currarg] = strdup(result.gl_pathv[i]);
+								comtab[numbCmd].countArgs++;
+								currarg++;
+							}
+							if( result.gl_pathc > 0 )
+   								globfree( &result );
+
+							}
+					}
+					else{
+						comtab[numbCmd].args[currarg] = $1;
+						currarg++;
+						comtab[numbCmd].countArgs++;
+					}
+
+
+					
+					
 					//printf("arge  lala\n");
 
 
@@ -475,10 +503,41 @@ int yydebug;
 				}
 			|	STRING 				
 				{
+
+
+					currarg = 1; //first element in arg[] is the cmd 
+
+					if(isWildcardPattern($1)){
+						glob_t result;
+						
+						//NOSORT = sorted alphabetical order?
+						if(glob($1, GLOB_NOSORT | GLOB_NOCHECK, NULL, &result) == 0){
+							int i; //gl.pathc contains num of matched files
+							for(i = 0; i < result.gl_pathc; i++){
+								comtab[numbCmd].args[currarg] = strdup(result.gl_pathv[i]);
+								comtab[numbCmd].countArgs++;
+								currarg++;
+							}
+							if( result.gl_pathc > 0 )
+   								globfree( &result );
+
+							}
+					}
+					else{
+						comtab[numbCmd].args[currarg] = $1;
+						currarg++;
+						comtab[numbCmd].countArgs++;
+					}
+
+
+
+
+					/*	//String doesn't need to check * and ? ???!!!!!
 					currarg = 1; //first element in arg[] is the cmd 
 					comtab[numbCmd].args[currarg] = $1;
 					currarg++;
 					comtab[numbCmd].countArgs++;
+					*/
 
 					/*** Testing ***/
 					//$$ = $1;
@@ -487,22 +546,65 @@ int yydebug;
 
 			|	env_var
 				{
+					//env_var does NOT need * and ? ??
+
 					//Do something
+					currarg = 1; //first element in arg[] is the cmd 
+					comtab[numbCmd].args[currarg] = $1;
+					currarg++;
+					comtab[numbCmd].countArgs++;
+					//printf("arge  lala\n");
+
+
+
+					/*** Testing ***/
+					//$$ = $1;
 					printf("nonbuiltin w 1 envar arg. envar: %s\n", $1);
 
 				}
 
 			|	arguments env_var
 				{
-					//Do something
+					//ENV Var doesn't need * and ? ???
+					comtab[numbCmd].args[currarg] = $2;
+					currarg++;
+					comtab[numbCmd].countArgs++;
+
+					/*** Testing ***/
+					//char *temp = strcat($1, " ");
+					//$$ = strcat(temp, $2);
+
 					printf("nonbuiltin w multiple args. envar:%s \n ", $2);
 				}
 
 			|	arguments WORD
 				{
+					
+					if(isWildcardPattern($2)){
+						glob_t result;
+						
+						//NOSORT = sorted alphabetical order?
+						if(glob($2, GLOB_NOSORT | GLOB_NOCHECK, NULL, &result) == 0){
+							int i; //gl.pathc contains num of matched files
+							for(i = 0; i < result.gl_pathc; i++){
+								comtab[numbCmd].args[currarg] = strdup(result.gl_pathv[i]);
+								comtab[numbCmd].countArgs++;
+								currarg++;
+							}
+							if( result.gl_pathc > 0 )
+   								globfree( &result );
+							}
+					}
+					else{
+						comtab[numbCmd].args[currarg] = $2;
+						currarg++;
+						comtab[numbCmd].countArgs++;
+					}
+
+					/*
 					comtab[numbCmd].args[currarg] = $2;
 					currarg++;
-					comtab[numbCmd].countArgs++;
+					comtab[numbCmd].countArgs++;*/
 
 					/*** Testing ***/
 					//char *temp = strcat($1, " ");
@@ -511,9 +613,31 @@ int yydebug;
 
 			|	arguments STRING
 				{
+					if(isWildcardPattern($2)){
+						glob_t result;
+						
+						//NOSORT = sorted alphabetical order?
+						if(glob($2, GLOB_NOSORT | GLOB_NOCHECK, NULL, &result) == 0){
+							int i; //gl.pathc contains num of matched files
+							for(i = 0; i < result.gl_pathc; i++){
+								comtab[numbCmd].args[currarg] = strdup(result.gl_pathv[i]);
+								comtab[numbCmd].countArgs++;
+								currarg++;
+							}
+							if( result.gl_pathc > 0 )
+   								globfree( &result );
+							}
+					}
+					else{
+						comtab[numbCmd].args[currarg] = $2;
+						currarg++;
+						comtab[numbCmd].countArgs++;
+					}
+
+					/*
 					comtab[numbCmd].args[currarg] = $2;
 					currarg++;
-					comtab[numbCmd].countArgs++;
+					comtab[numbCmd].countArgs++;*/
 
 
 					/*** Testing ***/
@@ -537,24 +661,17 @@ int yydebug;
 
 %%	
 
-/*
-char* noquoto(char* s)
-{
-	char temp[100];
-	int length = strlen(s);
-	printf("length is %d\n", length);
-
-	for(int i = 0; i < length-2; i++)
-	{
-		temp[i] = s[i+1];
-		//printf("char %c\n", temp[i-1]);
+//Check if an arguments contains * or ?
+int isWildcardPattern(char *arg){
+	int i;
+	for(i = 0; i < strlen(arg); i++){
+		if(arg[i] == '*' || arg[i] == '?')
+			return 1;
 	}
-	printf("new string %s\n", temp);
 
-
-	return temp;
+	return 0; //no * or ? found
 }
-*/
+
 
 
 void yyerror (char *s) 
