@@ -479,8 +479,15 @@ int executable()
 			return (OK);
 		}	
 
-		printf("%s is not an envCmd\n", unknowStr);
-		return (OK);
+		//Check if cmd exists
+
+		if(checkSystemCall() == 0){
+			return ERROR;
+		}
+		else{
+			printf("cmd found!\n");
+			return (OK);
+		}
 	}
 			
 } 
@@ -570,6 +577,7 @@ void commandPosition(int cmd)
 	if(executable() == (ERROR)) {  
 		//use access() system call with X_OK
 		printf("Command not Found!\n");
+		kill(getpid(), SIGTERM);
 		return;
 	}
 	else
@@ -730,6 +738,115 @@ char* addEOL(char* s)
 	printf("new addEOL string %s\n", temp);
 
 	return temp;
+}
+
+
+//Check if it's system cmd
+int checkSystemCall(){
+
+
+	//currcmd
+
+	char *home = strdup(getenv("HOME"));
+	char *path = strdup(getenv("PATH"));
+
+	char *pathToken;
+	pathToken = strtok(path, ":"); 
+	//printf("pathtoken: %s\n", pathToken);
+
+
+	char *fullpath = malloc(sizeof(pathToken) + 50);
+	fullpath = strcat(fullpath, pathToken);
+	//printf("Added slash: %s\n", pathToken);
+	fullpath = strcat(fullpath, "/");
+	fullpath = strcat(fullpath, comtab[currcmd].comName);
+
+	//printf("fullpath: %s\n", fullpath);
+
+	int ac;
+	ac = access(fullpath, X_OK);
+	//printf("access result: %d\n", ac);
+	if(ac == 0)
+		return 1;
+	
+
+	fullpath = NULL;
+	//free(fullpath);
+	//Not freeing may cause error later???
+
+	while((pathToken = strtok(NULL, ":")) != NULL){
+
+		//printf("pathtoken: %s\n", pathToken);
+
+
+		fullpath = malloc(sizeof(pathToken) + 50);
+		fullpath = strcat(fullpath, pathToken);
+		fullpath = strcat(fullpath, "/");
+		fullpath = strcat(fullpath, comtab[currcmd].comName);
+		//printf("fullpath: %s\n", fullpath);
+		//free(fullpath);
+		
+		ac = access(fullpath, X_OK);
+		//printf("access result: %d\n", ac);
+		if(ac == 0)
+			return 1;
+
+
+
+		fullpath = NULL;
+
+	}
+
+	char *homeToken;
+	homeToken = strtok(home, ":"); 
+	//printf("homeToken: %s\n", homeToken);
+
+
+	char *fullhpath = malloc(sizeof(pathToken) + 50);
+	fullhpath = strcat(fullhpath, homeToken);
+	//printf("Added slash: %s\n", pathToken);
+	fullhpath = strcat(fullhpath, "/");
+	fullhpath = strcat(fullhpath, comtab[currcmd].comName);
+
+	//printf("fullhpath: %s\n", fullhpath);
+
+	int ach;
+	ach = access(fullhpath, X_OK);
+	//printf("access result: %d\n", ach);
+	if(ach == 0)
+		return 1;
+
+
+	fullhpath = NULL;
+	//free(fullpath);
+	//Not freeing may cause error later???
+
+	while((homeToken = strtok(NULL, ":")) != NULL){
+
+		//printf("pathtoken: %s\n", homeToken);
+
+
+		fullhpath = malloc(sizeof(homeToken) + 50);
+		fullhpath = strcat(fullhpath, homeToken);
+		fullhpath = strcat(fullhpath, "/");
+		fullhpath = strcat(fullhpath, comtab[currcmd].comName);
+		//printf("fullhpath: %s\n", fullhpath);
+		//free(fullpath);
+		
+		ach = access(fullhpath, X_OK);
+		//printf("access result: %d\n", ac);
+		if(ach == 0)
+			return 1;
+
+
+		fullpath = NULL;
+
+	}
+
+
+	//free(fullpath);
+	return 0;
+
 }
 
 

@@ -84,6 +84,7 @@ void printEnv();
 // ------------ other command function ------------
 
 void execute_it();
+int checkSystemCall();
 int check_in_file();
 int check_out_file();
 
