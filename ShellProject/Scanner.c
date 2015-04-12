@@ -308,6 +308,9 @@ void do_it(){
 		case SETENV :
 			setenv(bistr, bistr2, 1);
 			break;
+		case UNSETENV :
+			unsetenv(bistr);
+			break;
 		case ALIAS :
 			showAlias();
 			break;
