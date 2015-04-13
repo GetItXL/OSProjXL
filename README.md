@@ -39,9 +39,11 @@ word: any combination from {character, number, or ./:~*?_ }
 string: quote with word {“word”}
 
 NOTE: PLEASE PAY ATTENTION WITH THE SPACE !
+
 syntax for built-in commands:
+
 	alias
-	alias word word		(for alias refer to another alias only)
+	alias word word			(for alias refer to another alias only)
 	alias word string		(for alias refer to others)
 	unalias word
 	printenv
@@ -50,9 +52,16 @@ syntax for built-in commands:
 	bye
 	
 syntax for other commands:
+
 	cmd [arg]* [| cmd [arg]* ] * [< file1] [ >[>] file2] [ 2> file3 || 2>&1]
 	
 	|: pipe
 	< input file 
 	> output file (replace contains)
 	>> output file 
+
+
+Wildcard Matching:	 
+
+A * matches any string, including the null string. A ? matches any single character. 
+		
