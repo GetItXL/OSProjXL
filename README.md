@@ -2,11 +2,13 @@
 Operating system project &lt;System Shell> using lex and yacc
 
 How to:
-	Compile with “make”, run with ./Scanner. 
+
+Compile with “make”, run with ./Scanner. 
 Enter bye to exist the project. 
 After exist, run command “make clean” to remove extra files.
 
 Contributors:
+
 Xixi Ruan
 Qianwen Ding
 
